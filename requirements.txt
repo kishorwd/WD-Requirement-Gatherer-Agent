@@ -1,0 +1,23 @@
+# Backend
+fastapi
+uvicorn[standard]
+sqlalchemy
+
+# Frontend
+streamlit
+
+# Core AI & Utilities
+langchain
+langchain-google-genai
+langchain-openai
+python-dotenv
+requests
+python-multipart
+# For reading PDF files
+pypdf
+# For reading DOCX files
+python-docx
+# For reading Excel files
+pandas
+openpyxl
+xlrd
