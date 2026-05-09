@@ -67,6 +67,7 @@ async def upload_discovery_plan(project_id: int, file: UploadFile = File(...), d
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error reading discovery plan: {e}")
 
+
 # ------------------------
 # Endpoint: Analyze Transcript (KEEP)
 # ------------------------

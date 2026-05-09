@@ -1,5 +1,1928 @@
 
 ╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 19:13:29 UTC
+╚═════════════════════════════════════════╝
+{
+  "stories": [
+    {
+      "text": "The system shall automatically send follow-up emails to contacts who have not responded to the initial outreach, using configurable rules for frequency and cadence based on the opportunity’s submission deadline.",
+      "module": "Automated Email Outreach",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall flag opportunities where no positive response has been received after a predefined number of follow-up attempts, and shall alert the assigned Business Development Executive to review.",
+      "module": "Notifications",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically assign qualified opportunities to the most appropriate Business Development Executive using AI, considering factors such as country of performance, current workload, and past expertise, while allowing managerial override.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall utilize AI to generate personalized email content for initial outreach to each lead, dynamically incorporating the opportunity’s scope, KRH’s strengths, and the recipient’s profile to maximize engagement.",
+      "module": "Automated Email Outreach",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall provide AI-assisted generation of first drafts for technical proposals, management proposals, and past performance documents for prime contracting opportunities, based on the solicitation requirements and KRH’s historical project data.",
+      "module": "AI Document Generation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically send post-submission follow-up emails to prime contractors to inquire about the status of submitted RFPs, with the ability to log responses.",
+      "module": "Post-Submission & Lost Opportunity Process",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall capture debriefing feedback from clients on lost opportunities and perform automated win/loss analysis to identify patterns, which can be used to improve future opportunity scoring.",
+      "module": "Post-Submission & Lost Opportunity Process",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall integrate with Outlook to enable bidirectional email synchronization, ensuring that emails sent from Salesforce appear in the user’s Outlook Sent Items and that replies are automatically captured and linked to the corresponding opportunity records.",
+      "module": "Automated Email Outreach",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 19:11:02 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    "How should Salesforce data model map KRH’s concepts of 'lead' (company) and 'POC' (contact)?",
+    "Is the Outlook-Salesforce email integration fully bidirectional and operational now?",
+    "What specific criteria (country, workload, BDE expertise) should drive automatic opportunity assignment?",
+    "How should the system handle multiple concurrent opportunity conversations with the same POC?",
+    "What are the rules for automated follow-up emails and when to flag an opportunity with no responses?",
+    "Confirm that a single positive response from any contacted lead moves the opportunity from Qualification to Capture.",
+    "When will KRH provide sample priming documents (proposals, pricing sheets) for AI training?",
+    "Urgent: Provide sandbox credentials to WarpDrive team in order to start org analysis.",
+    "Is automated win/loss analysis based on client feedback in scope for this phase?",
+    "What historical data and key fields should Einstein use for opportunity scoring?",
+    "What specific tasks do BDEs perform on mobile devices that could be automated?",
+    "What timeframe defines a 'stale' opportunity for management alerts?"
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 19:10:25 UTC
+╚═════════════════════════════════════════╝
+```json
+{
+  "items": [
+    {
+      "topic": "AI drafting complete technical proposals, management proposals, past performance documents, and pricing sheets for prime bids beyond the cover letter.",
+      "related_submodule": "AI Cover Letter Generation",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "AI performing post-submission win/loss analysis with predictive scoring and automated debrief collection from client feedback.",
+      "related_submodule": "Lost Opportunity Management",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 3)"
+    },
+    {
+      "topic": "AI generating actual pricing amounts and automatically filling government RFP pricing forms for submissions.",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Not Found"
+    }
+  ]
+}
+```
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 19:09:27 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "AI to automatically identify and create Account/Contact records from opportunity data",
+      "related_submodule": "Account/Contact Identification",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Personalized initial email outreach tailored to bidding strategy sent from user's name",
+      "related_submodule": "Email Outreach",
+      "related_discovery_topic": "Agentforce (Part 1)"
+    },
+    {
+      "topic": "Opportunity assignment based on workload, country, and other criteria using AI",
+      "related_submodule": "Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Stage progression from Qualification to Capture upon receiving positive response",
+      "related_submodule": "Stage Qualification",
+      "related_discovery_topic": "Einstein + Agentforce"
+    },
+    {
+      "topic": "Bi-directional integration confirmed allowing email logging and reply capture in Salesforce",
+      "related_submodule": "Email Logging",
+      "related_discovery_topic": "Agentforce (Part 1)"
+    },
+    {
+      "topic": "AI-generated PDF cover letter for proposals based on opportunity data",
+      "related_submodule": "AI Cover Letter Generation",
+      "related_discovery_topic": "Not Found"
+    },
+    {
+      "topic": "Management alerts for opportunities with no response after follow-up attempts",
+      "related_submodule": "Task & Opportunity Notifications",
+      "related_discovery_topic": "Agentforce (Part 2)"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 19:00:34 UTC
+╚═════════════════════════════════════════╝
+{
+  "stories": [
+    {
+      "text": "The system shall automatically assign an opportunity to a Business Development Executive (BDE) immediately after the identification stage, based on criteria such as country, line of business, and current BDE workload.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall use AI to generate personalized email drafts for each contact in the qualification stage, incorporating the opportunity’s scope, KRH’s strengths (e.g., incumbency, past performance), and the bidding strategy (prime vs subcontract).",
+      "module": "Automated Email Outreach & Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall send separate, individualized emails to all identified contacts across all prime contractors for a given opportunity, rather than a single group email.",
+      "module": "Automated Email Outreach & Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically send follow-up emails to contacts who have not responded, according to a configurable schedule based on the opportunity’s submission deadline proximity.",
+      "module": "Automated Email Outreach & Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall flag an opportunity and alert the assigned BDE if no positive response is received from any contacted lead within a defined period (e.g., one month) after a specified number of follow-ups.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically move an opportunity from Qualification to Capture stage when at least one contact from any pursued prime contractor responds with interest, while keeping the opportunity in Qualification for other contacts still pending response.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall use AI to automatically generate initial drafts of the Technical Proposal, Management Proposal, and Past Performance documents based on the opportunity requirements and KRH's historical data.",
+      "module": "AI Document Generation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall analyze client debrief feedback after opportunity closure (win or loss) to generate insights and store the analysis for future use.",
+      "module": "Post-Submission & Lost Opportunity Process",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically send follow-up emails to clients after proposal submission to check on the status of RFP evaluation.",
+      "module": "Post-Submission & Lost Opportunity Process",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall integrate with Microsoft Outlook such that emails sent from Salesforce appear in the user's Outlook sent items, and replies from contacts are captured in both the user’s mailbox and automatically logged to the corresponding opportunity record in Salesforce.",
+      "module": "Automated Email Outreach & Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall detect if a contact has been emailed recently for a different opportunity (e.g., within the same day) and suppress the new email or alert the user to avoid sending multiple emails to the same person in a short time frame.",
+      "module": "Automated Email Outreach & Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall consider the current workload (number of active opportunities) of each BDE when automatically assigning new opportunities to ensure balanced distribution.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall allow a manager to manually reassign an automatically assigned opportunity to a different BDE, and the system shall accept the change and update all subsequent processes accordingly.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall provide AI-assisted pricing recommendations for proposals based on historical pricing data and the scope of work of the opportunity.",
+      "module": "AI Document Generation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall provide a centralized repository within Salesforce for storing and categorizing KRH’s past performance documents, technical capabilities, and proposal templates to enable AI-driven document generation.",
+      "module": "AI Document Generation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 18:57:28 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    "Confirm stage definitions: Identification, Qualification, Capture and their entry/exit criteria.",
+    "Who provides email templates and how will AI personalize based on KRH strengths?",
+    "Define follow-up email frequency and non-response flagging timeframes.",
+    "Is bidirectional Salesforce-Outlook email integration fully functional?",
+    "How to handle AI conversations when same contact works multiple opportunities?",
+    "When will KRH provide opportunity assignment criteria (country, workload, history)?",
+    "Is AI drafting of full proposals (technical, management, past performance, pricing) in scope?",
+    "Confirm if AI win/loss analysis and post-submission follow-up are in scope.",
+    "What historical data is available in Salesforce for training AI models?",
+    "When will KRH send sample proposal documents for analysis?",
+    "Urgent: who provides sandbox credentials for WarpDrive audit?",
+    "Was BRN 2 (Account/Contact deduplication) fully covered, or deferred?"
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 18:56:26 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "AI drafting full technical proposals, management proposals, past performance documents, and pricing sheets for prime contract bidding.",
+      "related_submodule": "AI Cover Letter Generation",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Automated multi-step follow-up email sequences with criteria based on opportunity deadline proximity and no-response flagging logic.",
+      "related_submodule": "Email Outreach",
+      "related_discovery_topic": "Agentforce (Part 1)"
+    },
+    {
+      "topic": "AI win/loss analysis and predictive opportunity scoring based on client debrief feedback and historical win/loss patterns.",
+      "related_submodule": "Lost Opportunity Management",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 3)"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 18:55:42 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "AI to automatically extract countries of performance from PWS/SOW documents for opportunity qualification",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Manual identification of contacts/POCs for prime contractors to support outreach",
+      "related_submodule": "Account/Contact Identification, Account/Contact Deduplication",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "AI should draft personalized emails tailored to opportunity context and KRH strengths (e.g., incumbent status)",
+      "related_submodule": "Email Outreach, Email Logging",
+      "related_discovery_topic": "Agentforce (Part 1)"
+    },
+    {
+      "topic": "Automated assignment of opportunities to BDEs using AI based on country, workload, and other criteria",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Einstein + Agentforce"
+    },
+    {
+      "topic": "Bi‑directional Outlook–Salesforce integration for logging sent and received emails on opportunity records",
+      "related_submodule": "Email Outreach, Email Logging",
+      "related_discovery_topic": "Agentforce (Part 1)"
+    },
+    {
+      "topic": "Opportunity stage moves from Qualification to Capture upon first positive response, while persisting remaining leads",
+      "related_submodule": "AI Opportunity Scoring, Stage Qualification",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Flag opportunities with no positive response after defined follow‑up attempts for management alert",
+      "related_submodule": "Task & Opportunity Notifications",
+      "related_discovery_topic": "Agentforce (Part 2)"
+    },
+    {
+      "topic": "Request for cover letter samples and historical documents to train AI for automated cover letter generation",
+      "related_submodule": "AI Cover Letter Generation",
+      "related_discovery_topic": "Not Found"
+    },
+    {
+      "topic": "AI‑driven win‑loss analysis and opportunity scoring to predict probability of winning",
+      "related_submodule": "AI Opportunity Scoring, Stage Qualification",
+      "related_discovery_topic": "Einstein + Agentforce"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Speaker Extraction ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.extract_speakers_llm (line 276)
+║ Time: 2026-05-07 18:50:45 UTC
+╚═════════════════════════════════════════╝
+{"speakers": ["Kishor Goswami", "Mohamed Wafik", "Issa Almasri", "Dan Zig", "Abdulrahman AlKhannah", "Said Salah", "Shabeeb", "Aman Sagar", "Pathiyil Santhosh"]}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 18:25:20 UTC
+╚═════════════════════════════════════════╝
+{
+  "stories": [
+    {
+      "text": "The system shall automatically identify potential teaming partners (prime contractors) for subcontracting opportunities by searching external sources such as web, vendor portals, and internal databases.",
+      "module": "Account & Contact Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically research and capture contact details (name, email, title) of decision-makers at identified teaming partner companies.",
+      "module": "Account & Contact Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically generate and send personalized outreach emails to identified potential partner companies for a qualified opportunity, inviting them to bid.",
+      "module": "Automated Email Outreach & Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall assign a probability of success score to each qualified opportunity using AI, based on KRH's past performance, technical expertise, opportunity scope, and partner information.",
+      "module": "AI Opportunity Scoring & Sales Process Automation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall provide a ranked list of qualified opportunities according to their AI-calculated scores to help prioritize pursuit efforts.",
+      "module": "AI Opportunity Scoring & Sales Process Automation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically progress an opportunity from Identification to Qualification stage once it is validated that the opportunity's country of performance and scope align with KRH’s operational countries and services.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall allow administrators to maintain and expand the lists of countries of operation and lines of business used for automated opportunity eligibility checks.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 18:22:59 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    "Clarify if AI will actively search external websites for leads or only analyze data ingested into Salesforce.",
+    "Who is responsible for providing email templates and content for automated outreach emails?",
+    "Define the business rules for determining prime vs. subcontractor bidding strategy (identification vs qualification stages).",
+    "How will the system identify contact persons at lead companies for outreach emails (manual vs. AI-driven)?",
+    "Please provide the mandatory fields for the Opportunity Loss Report (BRN 7).",
+    "Define the specific timeframes that trigger 'stale opportunity' alerts for management notifications (BRN 8).",
+    "Share the updated countries/lines-of-business matrix including new construction division.",
+    "Clarify how the commercial/KPN agent business will be integrated—campaigns vs. opportunity process—in this phase.",
+    "Confirm availability and sufficiency of historical opportunity data for Einstein Scoring model training.",
+    "Confirm whether AI-assisted email drafting (full emails) is in scope, given BRN 5’s exclusion of 'drafting full emails'."
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 18:21:58 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "Integration of commercial product sales (KPN/Echolab agent model) into the government-contracting-focused Salesforce system.",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "AI autonomously searching the general web and external search engines to discover potential leads or bidders.",
+      "related_submodule": "Opportunity Identification",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Automation of multi-step follow-up email sequences and meeting coordination with leads, beyond the initial outreach email.",
+      "related_submodule": "Automated Email Outreach & Management",
+      "related_discovery_topic": "Agentforce (Part 1)"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 330)
+║ Time: 2026-05-07 18:20:41 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "Sales process overview: Identify, Qualify, Capture stages validated",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Opportunities fed into Salesforce from portals via Mulesoft integration",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Identification criteria defined as country of performance and lines of business",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Need for AI to suggest prime vs subcontractor bidding strategy confirmed",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Automated identification of potential subcontractor companies as leads from portals",
+      "related_submodule": "Account/Contact Identification, Account/Contact Deduplication",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Automated email outreach to subcontractors during qualification stage identified as need",
+      "related_submodule": "Email Outreach, Email Logging",
+      "related_discovery_topic": "Agentforce (Part 1)"
+    },
+    {
+      "topic": "AI should intelligently parse scope for validation, not rely on static rules",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Client to provide definitive list of countries and lines of business matrix",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Current manual qualification process to be fully automated",
+      "related_submodule": "Opportunity Identification, Bidding Strategy, Opportunity Assignment",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Mom ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_raw (line 371)
+║ Time: 2026-05-07 18:18:54 UTC
+╚═════════════════════════════════════════╝
+<div class="mom-report">
+  <h2 style="color:#6366f1;border-bottom:1px solid #333;padding-bottom:8px;">Meeting Minutes: KRH &lt;&gt; WarpDrive Discovery Session 1 – Sales Cloud + Einstein (Part 1)</h2>
+  <p>
+    <strong>📅 Date:</strong> June 25, 2025<br>
+    <strong>👤 Organizer:</strong> Kishor Goswami (Business Analysis Specialist, WarpDrive)<br>
+    <strong>👥 Attendees:</strong> Kishor Goswami (BA), Shabeeb (BA), Aman Sagar (Solution Architect), Mohamed Wafik (Client), Dan Zig (Client), Abdulrahman AlKhannah (Client), Said Salah (Client), Issa (Client), Mohammad Almuaili (Client)
+  </p>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">📌 Key Discussions</h3>
+  <ul style="line-height:1.7;">
+    <li><strong>System Access &amp; Sandbox Credentials:</strong> WarpDrive requires UAT sandbox access to begin analyzing the current Salesforce implementation; production access will be needed later for integration touchpoint validation.</li>
+    <li><strong>High-Level Business Process Overview:</strong> KRH's end-to-end sales process follows "Identify, Qualify, Capture" — opportunities are sourced from portals, validated against KRH's capabilities, and then pursued either as a prime or subcontractor.</li>
+    <li><strong>KRH Lines of Service:</strong> KRH provides 7–8 core service lines including HR/Recruitment, Life Support (housing, catering, laundry, PPE), Sponsorship/Visa, Transportation, Vehicles, plus a new Engineering &amp; Light Construction division.</li>
+    <li><strong>Terminology Clarification — Lead vs. Opportunity:</strong> In KRH's Salesforce vernacular, what Salesforce calls a "Lead" is treated as an "Opportunity" by KRH. KRH uses "Lead" to refer to client companies/accounts (e.g., Amentum, BAE Systems, V2X). One opportunity can have multiple leads attached.</li>
+    <li><strong>Sources of Opportunities:</strong> Opportunities are sourced from GovWin, SAM.gov, Kuwait government portals, Bahraini/Saudi committees, and general internet research. KRH uses keyword filtering (e.g., "manpower," country names) to identify relevant postings.</li>
+    <li><strong>Identification Stage Parameters:</strong> Two key criteria determine if an opportunity moves into the identification list: Country of Performance (7 operational countries) and Line of Business inclusion (does the scope involve any KRH services).</li>
+    <li><strong>Qualification Stage — Linking Opportunities to Leads:</strong> Once identified, the qualification stage involves determining prime vs. subcontractor role, identifying potential bidding companies (leads), and initiating outreach to those companies to gauge interest.</li>
+    <li><strong>Prime vs. Subcontractor Determination:</strong> Decision factors include security clearance requirements, scope compatibility with KRH lines of business, and whether the solicitation is set-aside for specific vendors. If KRH's capabilities cover 75–80%+ of the scope, prime is preferred.</li>
+    <li><strong>MuleSoft &amp; GovWin Integration:</strong> MuleSoft middleware is being finalized to automatically pull opportunities from GovWin into Salesforce. The AI engine will operate on data already residing within Salesforce, not directly on external portals.</li>
+    <li><strong>Automated Email Outreach Vision:</strong> Abdulrahman emphasized that a significant portion of the team's time is spent on manual email outreach to potential primes/teaming partners. KRH wants the AI to identify relevant leads and draft/send initial outreach emails automatically.</li>
+  </ul>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">🎯 Key Decisions</h3>
+  <ul style="line-height:1.7;">
+    <li>The two graduation parameters for moving an opportunity from Identification to Qualification are: <strong>Country of Performance</strong> and <strong>Line of Business inclusion</strong>. If both are "yes," the opportunity is qualified.</li>
+    <li>Prime vs. Subcontractor determination occurs at the <strong>Qualification stage</strong>, not at Identification, based on security requirements, scope fit, and vendor set-aside restrictions.</li>
+    <li>Identification and Qualification stages will likely be <strong>merged into a single automated stage</strong> once the AI solution is implemented, as the distinction was designed for a manual process.</li>
+    <li>The AI solution will operate <strong>within Salesforce</strong> on data that has already been ingested via MuleSoft integrations — the AI is not expected to directly scrape or integrate external portal data.</li>
+  </ul>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">🚀 Action Items</h3>
+  <ul style="line-height:1.7;list-style-type:square;">
+    <li><strong style="color:#ef4444;">Shabeeb:</strong> Coordinate with Mohamed Wafik / KRH team to obtain UAT sandbox credentials for the WarpDrive team.</li>
+    <li><strong style="color:#ef4444;">Said Salah:</strong> Share the Lines of Business &amp; Country of Performance matrix/chart (Excel sheet) with Kishor Goswami for reference.</li>
+    <li><strong style="color:#ef4444;">Issa (KRH):</strong> Prepare a step-by-step walkthrough of the qualification process, including email templates and examples of outreach to leads, for the next session.</li>
+    <li><strong style="color:#ef4444;">Kishor Goswami:</strong> Send out the Minutes of Meeting (MoM) summarizing all discussions and action items from this session.</li>
+    <li><strong style="color:#ef4444;">Shabeeb:</strong> Send Slack guest invitations to all KRH attendees for ongoing collaboration and communication.</li>
+    <li><strong style="color:#ef4444;">Dan Zig / KRH Team:</strong> Provide the MuleSoft API documentation and the field mapping document between GovWin and Salesforce to the WarpDrive team.</li>
+    <li><strong style="color:#ef4444;">Kishor Goswami / WarpDrive Team:</strong> Continue the discovery session tomorrow (June 26, 2025) focusing on the detailed qualification structure, email communication framework, and deeper walkthrough of the current manual process.</li>
+  </ul>
+</div>
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Speaker Extraction ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.extract_speakers_llm (line 276)
+║ Time: 2026-05-07 18:15:23 UTC
+╚═════════════════════════════════════════╝
+{"speakers": ["Abdulrahman AlKhannah", "Aman Sagar", "Dan Zig", "Issa", "Kishor Goswami", "Mohamed Wafik", "Mohammad Almuaili", "Said Salah", "Shabeeb"]}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:44 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the process for ensuring dashboard data refreshes in real time versus batch, and how do stakeholders validate accuracy? |
+| 2 | How do we define and source the key performance indicators (KPIs) across different business units, and what data quality checks are applied? |
+| 3 | What edge cases (e.g., missing data, outliers, or cross-border currency conversions) could break the dashboard, and how are they handled? |
+| 4 | How do we measure the business impact of dashboard adoption, and what actions are triggered when a metric falls outside a threshold? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:41 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What triggers a task or opportunity notification, and how is that trigger defined across different user roles or workflows? |
+| 2 | How is notification data sourced and validated to ensure accuracy when displaying task deadlines, opportunity values, or assignee details? |
+| 3 | How does the system handle edge cases such as a user unsubscribing mid-cycle, duplicate notifications for the same event, or a task being reassigned? |
+| 4 | What is the business impact of notification frequency and timing on task completion rates, opportunity closure, or user satisfaction metrics? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:31 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How does the current process identify and capture lost opportunities, and who is responsible for initiating the follow-up? |
+| 2 | What data sources are used to distinguish a lost opportunity from a deferred or withdrawn one, and how is data quality maintained? |
+| 3 | How do you handle edge cases where the opportunity was lost due to external factors beyond control, such as regulatory changes or market shifts? |
+| 4 | What is the business impact of not recovering or learning from lost opportunities, and how do you measure the effectiveness of re-engagement efforts? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:27 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How does the AI determine the appropriate tone and structure for a cover letter based on the job description and the user's personal background? |
+| 2 | What data sources are used to train the model, and how is the accuracy and relevance of that data validated against current industry standards? |
+| 3 | How does the system handle edge cases like users with no work experience, career changers, or highly niche job descriptions that lack sufficient training data? |
+| 4 | What key business metrics would you track to evaluate whether AI-generated cover letters actually improve interview rates or hiring outcomes? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:19 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How would the AI determine the appropriate level of detail for a task description based on the user's past behavior or role? |
+| 2 | What data sources or historical patterns should the AI leverage to suggest task dependencies or deadlines? |
+| 3 | How should the system handle ambiguous or incomplete user input, such as vague task names or missing priority cues? |
+| 4 | What metrics would best indicate that AI-assisted task creation improves team productivity versus introducing misinterpretation? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:16 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|--------------------|
+| 1 | What is the process for determining which emails are logged, and how do we handle emails that contain sensitive or personally identifiable information? |
+| 2 | Which specific data fields are captured for each email log, and how is the integrity of that data ensured across different email systems or integrations? |
+| 3 | How does the system handle edge cases such as bounce-back emails, auto-replies, or emails sent to invalid addresses that are still logged? |
+| 4 | What business impact metrics are tracked from email logging, and how do these logs inform decisions about communication effectiveness or compliance reporting? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:12 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How is the recipient list segmented and validated to ensure deliverability and relevance before sending? |
+| 2 | What data points are tracked from open rates to reply sequences, and how are they fed back into outreach optimization? |
+| 3 | How do you handle non-responses, bounces, or spam complaints to maintain sender reputation and list hygiene? |
+| 4 | What measurable impact does email outreach have on pipeline velocity or conversion compared to other channels? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:08 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How do you currently determine when a lead meets the criteria to progress to the next stage, and what triggers that decision? |
+| 2 | What data sources or signals do you rely on to validate that a lead is qualified, and how do you handle missing or incomplete data? |
+| 3 | How do you handle leads that partially meet qualification criteria or have conflicting signals from different teams? |
+| 4 | What is the impact on revenue or conversion rates when qualification criteria are too strict versus too lenient? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:34:02 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for identifying and prioritizing AI opportunities, and where are the biggest bottlenecks or blind spots? |
+| 2 | What data sources and quality standards are used to score opportunities, and how do you handle data gaps or conflicting signals? |
+| 3 | How would the scoring model handle edge cases such as opportunities with high potential but severe regulatory or ethical constraints? |
+| 4 | What business metrics or strategic outcomes do you aim to influence with this scoring, and how will you measure its impact on decision-making? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:33:58 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for identifying and merging duplicate accounts or contacts, and how are conflicts between different data sources resolved? |
+| 2 | How do you define a "duplicate" across various data fields (e.g., name, email, phone), and what data quality thresholds trigger a manual review versus automatic merge? |
+| 3 | What edge cases exist, such as accounts with the same name but different addresses, or contacts that are intentionally shared across multiple accounts, and how should the system handle them? |
+| 4 | If deduplication removes or merges records, how does that impact downstream reporting, sales attribution, and historical audit trails for compliance? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:33:54 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What process is used to match incoming leads or records to existing accounts and contacts, and how is confidence scored? |
+| 2 | Which data fields and external enrichment sources are most critical for linking contacts to accounts, and how are data conflicts resolved? |
+| 3 | How do you handle edge cases such as multiple contacts sharing the same email domain, duplicate accounts, or contacts with no company name? |
+| 4 | What is the business impact of misidentified accounts or contacts on sales attribution, reporting accuracy, and customer experience? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:33:50 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for determining which opportunities get assigned to which team members, and how is this documented? |
+| 2 | How do you ensure data accuracy and completeness in the opportunity records that drive assignment rules? |
+| 3 | What happens when an opportunity meets multiple assignment criteria or none at all, and how are those edge cases handled? |
+| 4 | How does the assignment logic impact sales cycle time or conversion rates, and what metrics are used to measure its effectiveness? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:33:47 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How is the current bidding strategy determined, and what decision-making process is followed when adjusting bids? |
+| 2 | What data sources and metrics are used to evaluate the effectiveness of the bidding strategy, and how is data quality ensured? |
+| 3 | How does the bidding strategy handle scenarios with limited historical data or sudden market shifts, such as a competitor entering or leaving? |
+| 4 | What is the expected impact of the bidding strategy on overall profitability and customer acquisition cost, and how is that measured? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 315)
+║ Time: 2026-05-07 16:33:41 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How does your team currently distinguish between a genuine market opportunity and a false positive signal in early-stage data? |
+| 2 | What data sources or metrics do you rely on to validate the size and growth potential of an opportunity, and how do you handle conflicting signals? |
+| 3 | Can you describe a scenario where an opportunity that initially appeared promising later failed due to an edge case you hadn’t anticipated? |
+| 4 | If you had only 30 days to decide on pursuing a new opportunity, what key business impact criteria would you use to justify the investment? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Submodule Enumeration ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 223)
+║ Time: 2026-05-07 16:33:37 UTC
+╚═════════════════════════════════════════╝
+["Opportunity Identification", "Bidding Strategy", "Opportunity Assignment", "Account/Contact Identification", "Account/Contact Deduplication", "AI Opportunity Scoring", "Stage Qualification", "Email Outreach", "Email Logging", "AI Assistance for Task Creation", "AI Cover Letter Generation", "Lost Opportunity Management", "Task & Opportunity Notifications", "BDE & Management Dashboards"]
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Overview Generation ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 209)
+║ Time: 2026-05-07 16:33:31 UTC
+╚═════════════════════════════════════════╝
+**1. Executive Summary:**
+KRH, a resource hiring company, is pursuing a Salesforce transformation to streamline its end-to-end sales opportunity management process. This pre-meeting intelligence brief outlines a partial scope of work, focusing on automation and AI-driven enhancements across opportunity validation and assignment, account and contact management, scoring, email outreach, document generation, and reporting. The solution leverages Sales Cloud Enterprise, Einstein 1 Platform, and Data Cloud, employing Salesforce Flows and Einstein AI to reduce manual effort and improve sales efficiency. Key constraints include explicit out-of-scope items (auto-cloning of renewals, multi-step email sequences, sentiment analysis), strong dependency on KRH-provided data matrices and templates, and manual confirmation steps for bidding strategy decisions.
+
+**2. Company & Industry Analysis:**
+KRH operates in the competitive resource hiring and staffing industry, where success hinges on rapidly identifying, qualifying, and bidding on contract opportunities. Typical challenges include high volumes of incoming opportunities, complex relationships with prime contractors and end-clients, account/contact data duplication, and inconsistent sales execution. Automating triage, leveraging AI for scoring and strategy recommendations, and standardizing proposal generation can provide a critical competitive advantage by accelerating response times and focusing sales efforts on the most promising deals. The industry’s reliance on relationship management and timely follow-ups makes robust CRM automation essential for scalable growth.
+
+**3. Project Scope & Key Objectives:**
+The project scope includes nine core business requirements: (1) Automated opportunity validation against KRH’s countries and lines of business, AI-suggested bidding strategy (Prime vs. Subcontracting), automatic disqualification, and assignment to Business Development Executives (BDEs) based on a routing matrix. (2) Automated creation and deduplication of Account/Contact records for prime contractors and opportunity POCs, with manual review flags for missing contacts. (3) AI Opportunity Scoring for new opportunities and automatic stage progression from Identification to Qualification/Capture upon assignment. (4) Initial personalized single-email outreach tailored to bidding strategy, sent from the assigned user’s name, with email logging. (5) Einstein Copilot AI assistance for creating tasks via natural language commands. (6) AI-driven PDF Cover Letter generation for proposals. (7) Mandatory Opportunity Loss Report enforced via Screen Flow before closing lost opportunities. (8) Custom task reminder and stale opportunity notifications (limited to 5 distinct notifications). (9) Seven standard reports and one dashboard for BDEs and managers. Out-of-scope elements explicitly excluded from this phase include auto-cloning of renewal opportunities, email sentiment analysis for stage advancement, multi-step follow-up sequences, full proposal document generation beyond cover letters, and advanced analytics.
+
+**4. Potential Risks & Ambiguities:**
+Key risks and ambiguities include: (1) Heavy reliance on KRH to provide definitive lists (countries, lines of business, assignment matrix, email templates, cover letter content, loss report fields) – any delay or incompleteness will stall configuration. (2) AI model effectiveness depends on sufficient historical data for Einstein Scoring; poor data quality or volume may degrade accuracy. (3) The integration feeding incoming opportunity data is an external assumption – data quality failures or integration delays could break the automation chain. (4) Manual user confirmation for bidding strategy introduces a potential bottleneck if BDEs fail to act promptly. (5) Standard Salesforce duplicate matching may not fully capture entity resolution nuances in a resource hiring context, risking account/contact proliferation. (6) Scope exclusions (advanced analytics, multi-step follow-ups, etc.) could create stakeholder dissatisfaction if not strictly managed. (7) Using Visualforce for PDF generation may pose long-term technical debt as Salesforce shifts toward Lightning Web Components. (8) The out-of-scope 24-hour manual review window prior to assignment leaves a process gap that may require workarounds.
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 11:56:33 UTC
+╚═════════════════════════════════════════╝
+{
+  "stories": [
+    {
+      "text": "The system shall automatically calculate and display a lead score based on predefined criteria to help sales reps prioritize high-value leads.",
+      "module": "Lead Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall provide predefined lead stages (e.g., New, Working, Unqualified) to allow tracking of progress and removal of unqualified leads.",
+      "module": "Lead Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall provide a product interest checklist on the lead record to capture which products a prospect is interested in, replacing free-text note fields.",
+      "module": "Lead Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall display a summary highlight panel at the top of the lead record showing lead score, current stage, and next follow-up date to reduce unnecessary scrolling.",
+      "module": "Lead Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall route web-generated leads automatically to sales teams based on geographic region to ensure timely follow-up in the correct time zone.",
+      "module": "Lead Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall prevent duplicate lead records from web form submissions caused by users clicking the submit button multiple times due to slow page loading.",
+      "module": "Lead Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall enforce that the Annual Contract Value and Competitor fields are populated before an opportunity can be advanced to the Negotiation stage.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall require an approval process when an opportunity discount exceeds 20% before the deal can progress further.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically set the contract start date to the current date when an opportunity is closed as Won, unless manually specified otherwise by the user.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall generate a formatted PDF quote directly from opportunity data, including line items, totals, and a special notes section for deal-specific exceptions.",
+      "module": "Quoting",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall synchronize the quote total with the opportunity amount whenever the quote is updated to maintain data consistency.",
+      "module": "Quoting",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall format the generated quote PDF for optimal viewing on mobile devices such as tablets.",
+      "module": "Quoting",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 11:55:15 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    "What specific criteria and weightings should be used to compute the lead scoring priority number?",
+    "What are the exact lead lifecycle stages, definitions, and entry/exit criteria?",
+    "Which product categories must be available as picklist values on lead records?",
+    "What duplicate identification criteria (email, phone, company) and merge logic should apply?",
+    "What country-to-team mapping should lead routing use for immediate geographic assignment?",
+    "At which opportunity stage should ACV, Competitor, and Close Date become mandatory fields?",
+    "What approval process and thresholds (e.g., >20% discount) are required for opportunities?",
+    "Which Quote PDF fields are mandatory, and what mobile layout requirements exist?",
+    "Should the automated Start Date default to Close Date or today, and can users override it?",
+    "How should duplicate web form submissions be prevented—UI fix or server-side deduplication?",
+    "What fields should populate the record highlight panel (score, stage, next call date)?",
+    "What specific validation rules should enforce at the Negotiation stage beyond discount approval?"
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 11:54:24 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "Request to generate polished PDF quotes from the system with mobile-friendly layout, special notes, and real-time sync with opportunity totals.",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Implementation of an automated discount approval process that triggers manager review when discount exceeds 20% on an opportunity.",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "A highlight panel or 'cheat sheet' component on record pages to surface key lead/opportunity metrics like score, stage, and next call date.",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 11:50:54 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "Lead scoring to prioritize high-intent prospects over noise",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Clearly defined lead status stages (New, Working, Unqualified)",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Product interest categorization instead of free-text notes",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Highlight panel on lead record for score, stage, and next call date",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Geography-based lead routing to regional sales teams",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Prevention of duplicate leads from web form submissions",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
+    },
+    {
+      "topic": "Enforce Annual Contract Value and Close Date on Opportunity records",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Competitor tracking on opportunities for loss analysis",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Stage-dependent required fields at Negotiation stage",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Discount approval process for discounts exceeding 20%",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Generate professional PDF quotes directly from the system",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Mobile-friendly quote layout for iPad and phone viewing",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    },
+    {
+      "topic": "Automated contract start date upon opportunity win",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Mom ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_raw (line 380)
+║ Time: 2026-05-05 11:49:42 UTC
+╚═════════════════════════════════════════╝
+<div class="mom-report">
+  <h2 style="color:#6366f1;border-bottom:1px solid #333;padding-bottom:8px;">Meeting Minutes: Salesforce Sales Cloud Discovery Session</h2>
+  <p>
+    <strong>📅 Date:</strong> May 5, 2026<br>
+    <strong>👤 Organizer:</strong> Aravind (Business Analyst)<br>
+    <strong>👥 Attendees:</strong> Aravind (Business Analyst), Sarah (Sales Operations Lead), Mike (Regional Sales Manager), David (RevOps & Analytics)
+  </p>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">📌 Key Discussions</h3>
+  <ul style="line-height:1.7;">
+    <li><strong>Lead Quality &amp; Prioritization:</strong> Reps are drowning in unqualified web leads; a lead scoring mechanism is needed to surface high‑intent prospects.</li>
+    <li><strong>Lead Stage &amp; Pipeline Visibility:</strong> No defined stages exist; reps cherry‑pick and can’t prove they’re working a lead. Clear stages (New, Working, Unqualified) and the ability to remove junk are required.</li>
+    <li><strong>Product Interest Capture:</strong> Today sales reps rely on free‑text Notes fields, wasting time. A structured product picklist should replace the essay‑style text.</li>
+    <li><strong>Highlight Panel / Cheat Sheet:</strong> A condensed summary panel at the top of the record—showing score, stage, and next call—would eliminate endless scrolling.</li>
+    <li><strong>Geography‑Based Lead Routing:</strong> Current round‑robin routing ignores location; a Berlin lead went to a Chicago rep, costing the deal. Leads from the web must route immediately to the correct regional team (e.g., EMEA).</li>
+    <li><strong>Web Form Duplicates:</strong> A slow Thank‑You page causes prospects to hit Submit repeatedly, creating duplicate leads that waste everyone’s time.</li>
+    <li><strong>Opportunity Data Hygiene:</strong> Many opportunities lack Annual Contract Value and have stale close dates, breaking month‑end forecasting.</li>
+    <li><strong>Competitor Tracking:</strong> The team currently has no standard way to capture who they’re losing to (e.g., LogiTech), limiting Marketing intelligence.</li>
+    <li><strong>Staged Mandatory Fields:</strong> The group agreed that forcing ACV, competitor, etc. should happen only when a deal enters Negotiation, not on day one when budget is unknown.</li>
+    <li><strong>Discount Approval Controls:</strong> Reps are offering excessive discounts to hit numbers; any discount over 20% must stop and require Sarah’s approval before proceeding.</li>
+    <li><strong>Quote Generation &amp; Synchronization:</strong> Quotes produced in Word are unprofessional and inconsistent. A system‑generated PDF is needed—linked to the deal total, mobile‑friendly, and with a Special Notes section for exceptions.</li>
+    <li><strong>Won Deal Start Date Automation:</strong> The implementation team is often unclear when a contract begins. The start date should default to today when a deal is Won, unless manually changed.</li>
+  </ul>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">🎯 Key Decisions</h3>
+  <ul style="line-height:1.7;">
+    <li>Implement a lead scoring model to bubble up high‑intent prospects and de‑prioritise noise.</li>
+    <li>Define standard lead stages (New, Working, Unqualified) and allow reps to dump unqualified leads from the active view.</li>
+    <li>Replace the free‑text Notes area with a structured product interest picklist for leads.</li>
+    <li>Build a highlight panel at the top of the lead page displaying score, stage, and next call date.</li>
+    <li>Route web leads by geography to the appropriate regional sales team, starting with EMEA for European submissions.</li>
+    <li>Add duplicate detection to prevent multiple submissions from the same web form entry.</li>
+    <li>Enforce mandatory entry of Annual Contract Value and competitor information when a deal moves to the Negotiation stage.</li>
+    <li>Introduce a discount approval rule: any discount above 20% must be reviewed and approved by Sarah.</li>
+    <li>Generate quotes as branded, data‑synced PDFs from the system, with a Special Notes section and mobile‑friendly layout.</li>
+    <li>Automatically set the contract start date to the current date upon deal close, with the ability to manually override.</li>
+  </ul>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">🚀 Action Items</h3>
+  <ul style="line-height:1.7;list-style-type:square;">
+    <li><strong style="color:#ef4444;">Aravind (BA):</strong> Map out formal user stories covering all discussed pain points and share with the team for review.</li>
+    <li><strong style="color:#ef4444;">Sarah (Sales Operations Lead):</strong> Draft clear definitions for lead stages, the highlight panel fields, and the mandatory field rules at the Negotiation stage.</li>
+    <li><strong style="color:#ef4444;">Mike (Regional Sales Manager):</strong> Compile the list of required product categories and recommend practical lead scoring parameters based on field experience.</li>
+    <li><strong style="color:#ef4444;">David (RevOps & Analytics):</strong> Design geography‑based lead routing logic and duplicate detection rules for the web form.</li>
+    <li><strong style="color:#ef4444;">Sarah (Sales Operations Lead):</strong> Define the over‑20% discount approval workflow and the mandatory quote elements (including Special Notes).</li>
+    <li><strong style="color:#ef4444;">David (RevOps & Analytics):</strong> Specify the quote‑deal synchronisation behaviour and the PDF template requirements for mobile use.</li>
+  </ul>
+</div>
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Speaker Extraction ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.extract_speakers_llm (line 285)
+║ Time: 2026-05-05 11:46:28 UTC
+╚═════════════════════════════════════════╝
+{"speakers": ["Aravind", "Sarah", "Mike", "David"]}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Speaker Extraction ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.extract_speakers_llm (line 285)
+║ Time: 2026-05-05 11:44:52 UTC
+╚═════════════════════════════════════════╝
+{"speakers": ["Aravind", "Sarah", "Mike", "David"]}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 03:24:29 UTC
+╚═════════════════════════════════════════╝
+{
+  "stories": [
+    {
+      "text": "The system shall use natural language processing to analyze opportunity scope descriptions and determine if they align with any of KRH's lines of business, even when the scope does not explicitly mention those services, to enable automated advancement from Identification to Qualification.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically advance an opportunity from the Identification stage to the Qualification stage when the country of performance is in the approved list and the AI-determined line of business match is positive.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically disqualify opportunities that do not meet the country of performance or line of business criteria and archive them with the reason for disqualification.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall allow administrators to maintain and update the lists of operational countries and lines of business without requiring development effort, such that changes are immediately reflected in the automated identification process.",
+      "module": "System Configuration",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically search configured external data sources and the internal lead database to identify potential primes and contacts for subcontracting opportunities, and display them to the user for review.",
+      "module": "Lead Generation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically generate and send initial outreach emails to each identified potential lead, including personalized opportunity and capability information, and log these communications against the opportunity record.",
+      "module": "Email Automation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall provide a review step for the user to modify the list of identified leads and the email content before sending.",
+      "module": "Email Automation",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall automatically transition the opportunity from Qualification to Capture stage when a lead responds positively, or trigger a manual follow-up task if no response is received within a set timeframe.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    },
+    {
+      "text": "The system shall use AI to suggest a bidding strategy (Prime or Subcontractor) based on scope, requirements, and security clearance eligibility, with security clearance requirements automatically disqualifying a Prime strategy.",
+      "module": "Opportunity Management",
+      "status": "Provisional",
+      "scope_status": "Pending",
+      "scope_justification": ""
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 03:22:10 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    "Confirm Mulesoft integration go-live date and provide field mapping document for govwin-Salesforce data flow.",
+    "Share the latest matrix of countries vs. lines of business used in identification.",
+    "Clarify: should AI search external sources (web, LinkedIn) for new prime leads, or only use existing CRM accounts?",
+    "At which stage (identification/qualification) is Prime vs Sub strategy decision made, and based on what rules?",
+    "Provide the scoring criteria, weightages, and threshold values used to qualify opportunities.",
+    "How is mandatory security clearance handled — automatic prime disqualification or manual override?",
+    "Walk through a real qualification example, showing email templates, lead contact discovery, and follow-up steps.",
+    "Define commercial (KPN) opportunity management process and confirm if it is in scope for this phase."
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 03:21:24 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "AI to search external web/search engines for potential leads or vendors (e.g., non-tactical vehicle providers).",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Not Found"
+    },
+    {
+      "topic": "Adding commercial/KPN product selling (agency for Ecolab) as a new business line using Salesforce Campaigns.",
+      "related_submodule": "Not Found",
+      "related_discovery_topic": "Not Found"
+    },
+    {
+      "topic": "AI to analyze win/loss root causes and provide prescriptive insights on reasons for losing or winning.",
+      "related_submodule": "Lost Opportunity Management",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 3)"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_json (line 339)
+║ Time: 2026-05-05 03:20:09 UTC
+╚═════════════════════════════════════════╝
+{
+  "items": [
+    {
+      "topic": "Clarified that business starts with opportunities as primary entity, not traditional leads",
+      "related_submodule": "Opportunity Identification",
+      "related_discovery_topic": "Understanding Lead management lifecycle, account/contact process, automations as is in current System"
+    },
+    {
+      "topic": "Confirmed country of performance and lines of business as key parameters for initial opportunity validation",
+      "related_submodule": "Opportunity Identification",
+      "related_discovery_topic": "Understanding Lead management lifecycle, account/contact process, automations as is in current System"
+    },
+    {
+      "topic": "Defined bidding strategy logic: Prime if scope matches services and no restrictive security requirements, else Sub",
+      "related_submodule": "Bidding Strategy",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1) – BRN 1 Opportunity Management"
+    },
+    {
+      "topic": "Validated Mulesoft integration to transfer portal opportunities into Salesforce as planned",
+      "related_submodule": "Opportunity Identification",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1) – BRN 1 Technical Assumptions"
+    },
+    {
+      "topic": "Requirement for AI to search and identify potential prime contractor leads for subcontracting opportunities",
+      "related_submodule": "Account/Contact Identification",
+      "related_discovery_topic": "Understanding Lead management lifecycle, account/contact process, automations as is in current System"
+    },
+    {
+      "topic": "Automated initial email outreach to potential leads during qualification to determine bidding interest",
+      "related_submodule": "Email Outreach",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1) – BRN 1 Opportunity Management"
+    },
+    {
+      "topic": "Expectation for AI to analyze opportunity data within Salesforce after ingestion, not on external portals",
+      "related_submodule": "Opportunity Identification",
+      "related_discovery_topic": "Sales Cloud + Einstein (Part 1) – BRN 1 Functional Assumptions"
+    }
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Mom ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.call_llm_raw (line 380)
+║ Time: 2026-05-05 03:18:44 UTC
+╚═════════════════════════════════════════╝
+<div class="mom-report">
+  <h2 style="color:#6366f1;border-bottom:1px solid #333;padding-bottom:8px;">Meeting Minutes: KRH <> WarpDrive Discovery Session 1 - Sales Cloud + Einstein (Part 1)</h2>
+  <p>
+    <strong>📅 Date:</strong> Jun 25, 2025<br>
+    <strong>👤 Organizer:</strong> Kishor Goswami (WarpDrive)<br>
+    <strong>👥 Attendees:</strong> Kishor Goswami (BA), Shabeeb (BA), Aman Sagar (TS), Mohamed Wafik (Client), Dan Zig (Client), Said Salah (Client), Abdulrahman AlKhannah (Client), Mohammad Almuaili (Client), Issa (Client)
+  </p>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">📌 Key Discussions</h3>
+  <ul style="line-height:1.7;">
+    <li><strong>Terminology Alignment (Lead vs. Opportunity):</strong> A significant portion of the meeting was dedicated to clarifying the definition of "Lead" versus "Opportunity" within KRH's Salesforce implementation. KRH starts their process from the "Opportunity" stage, which represents a specific project or RFP identified from portals, rather than a traditional "Lead" (which would be a person or a company). An opportunity can be linked to multiple "Leads" (partner companies) during the qualification process.</li>
+    <li><strong>High-Level Business Process (Identify, Qualify, Capture):</strong> KRH's core sales process was defined across three main stages: Identification (finding potential projects from sources like GovWin), Qualification (validating if KRH can service the project and identifying bidders), and Capture (the proposal and pricing phase to win the deal).</li>
+    <li><strong>KRH's Nine Lines of Business:</strong> The team outlined the specific services KRH provides, which form the basis for opportunity identification. These include full-fledged HR services (recruitment, deployment), life support services (housing, transportation, catering, PPE, training), standalone housing, sponsorship/visa processing, and a newly added light engineering/construction division.</li>
+    <li><strong>Identification Stage Mechanics:</strong> The manual process involves a team member scanning US government portals (e.g., SAM.gov, GovWin) and country-specific portals using keywords. The system receives an RFP, and the opportunity is identified for KRH's pipeline.</li>
+    <li><strong>Qualification Stage & Subcontracting Outreach:</strong> When KRH cannot prime a project (e.g., due to scope or security clearance), they act as a subcontractor. The qualification stage involves identifying potential prime contractors ("Leads"), sending automated emails to gauge their interest in teaming with KRH, and gathering intelligence on who plans to bid.</li>
+    <li><strong>Prime vs. Sub Determination:</strong> The decision to pursue a project as a prime is based on whether the scope of work falls within KRH's direct lines of business and country of operation. This is currently a manual assessment but is a prime target for AI automation by analyzing the scope of work description.</li>
+    <li><strong>Vision for AI-Powered Automation:</strong> The client expressed a strong desire to fully automate the Identification and Qualification stages to eliminate "donkey work." The goal is for AI to ingest opportunity data from portals into Salesforce, automatically determine if it's in a valid country and line of business, and even identify new potential prime contractor leads by searching the web.</li>
+    <li><strong>MuleSoft Integration with GovWin:</strong> It was confirmed that MuleSoft is being used as a middleware to integrate data from the GovWin portal directly into Salesforce as an "Opportunity" record. This integration is nearly live, and will serve as the data foundation for the AI analysis.</li>
+    <li><strong>Graduation Criteria from Identification to Qualification:</strong> For an opportunity to move from Identification to Qualification, it must pass two checks: (1) The country of performance must be one of the countries KRH operates in, and (2) The scope of work must include at least one of KRH's lines of business. Once both are confirmed, the opportunity is qualified for further action.</li>
+    <li><strong>Commercial Division (KPN) Process:</strong> A separate business process for the commercial division (selling products like Ecolab as an agent) was briefly discussed. The team decided to treat these using Salesforce Campaigns with accounts and opportunities underneath, keeping it distinct from the government contracting process.</li>
+  </ul>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">🎯 Key Decisions</h3>
+  <ul style="line-height:1.7;">
+    <li>The key parameters for moving an opportunity to the Qualification stage are officially defined as <strong>Country of Performance</strong> and <strong>Line of Business</strong> match. The Prime vs. Sub determination will be a separate decision made later within the Qualification stage.</li>
+    <li>The detailed walkthrough of the manual “Qualification” process, including a step-by-step demonstration of the email outreach to leads, will be the primary agenda item for the next session to ensure a deep understanding of current pain points.</li>
+    <li>The AI and automation scope was confirmed to be focused on analyzing data that is already residing within the Salesforce CRM, not on performing the external integration of data into Salesforce, which is handled by MuleSoft.</li>
+  </ul>
+
+  <h3 style="color:#a8b1ff;margin-top:24px;">🚀 Action Items</h3>
+  <ul style="line-height:1.7;list-style-type:square;">
+    <li><strong style="color:#ef4444;">Shabeeb (WarpDrive):</strong> Coordinate with the KRH team to obtain UAT Sandbox credentials and access for the WarpDrive team to begin system analysis.</li>
+    <li><strong style="color:#ef4444;">WarpDrive Team:</strong> Send out the formal Minutes of Meeting (MoM) and action pointers summarizing today's discussion.</li>
+    <li><strong style="color:#ef4444;">Said Salah / KRH Team:</strong> Share a sample or screenshot of the "Area of Performance vs. Lines of Business" matrix with the WarpDrive team.</li>
+    <li><strong style="color:#ef4444;">Mohamed Wafik / KRH Team:</strong> Share the list of the API mapping between GovWin and Salesforce fields to support the understanding of the data integration.</li>
+    <li><strong style="color:#ef4444;">Issa (KRH):</strong> Prepare a detailed, step-by-step demonstration of the manual Qualification process, including the email outreach to potential prime contractors, to be presented at the next meeting.</li>
+  </ul>
+</div>
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Speaker Extraction ════════════════════════════════╗
+║ Function: core.post_meeting_analyzer.extract_speakers_llm (line 285)
+║ Time: 2026-05-05 03:17:16 UTC
+╚═════════════════════════════════════════╝
+{
+  "speakers": [
+    "Kishor Goswami",
+    "Mohamed Wafik",
+    "Dan Zig",
+    "Shabeeb",
+    "Said Salah",
+    "Abdulrahman AlKhannah",
+    "Mohammad Almuaili",
+    "Issa",
+    "Aman Sagar"
+  ]
+}
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:58 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for identifying and prioritizing which metrics to display on management dashboards, and who decides when a new KPI is needed? |
+| 2 | How do you ensure data accuracy and consistency across multiple data sources feeding into the dashboard, and what validation steps are in place? |
+| 3 | What edge cases have you encountered where dashboard data became misleading or incomplete, and how did you handle those situations? |
+| 4 | How do management dashboards directly influence business decisions, and what is the measurable impact of those decisions on operational efficiency or revenue? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:55 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How do we ensure notifications are prioritized and not overwhelming for users? |
+| 2 | What data sources drive notification triggers and how do we handle stale or duplicate data? |
+| 3 | How should the system behave when a user has no internet connectivity or disables notifications? |
+| 4 | What metrics will we use to measure notification effectiveness and user engagement? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:51 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|--------------------|
+| 1 | How do you currently define and capture a "lost opportunity" across different sales stages, and what triggers that classification? |
+| 2 | What data sources and validation processes ensure the accuracy and completeness of lost opportunity records, especially for deals that re-enter the pipeline? |
+| 3 | How do you handle ambiguous cases where a deal is not explicitly lost but goes dormant or is abandoned by the customer—are these treated as lost opportunities? |
+| 4 | What specific business metrics or KPIs are derived from lost opportunity analysis, and how do these insights influence resource allocation or sales strategy adjustments? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:47 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|---------------------|
+| 1 | How does the AI determine the tone and structure of the cover letter based on the job description and user profile? |
+| 2 | What data sources (e.g., user resume, job posting, company info) are used to personalize the cover letter, and how is data quality ensured? |
+| 3 | How does the system handle ambiguous job descriptions, such as those with minimal details or conflicting requirements? |
+| 4 | What metrics define success for the cover letter feature, and how does it affect user engagement and job application conversion rates? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:41 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How will the AI determine the appropriate level of detail and context needed for different types of tasks (e.g., simple reminders vs. complex projects) to ensure the assistance is valuable rather than overwhelming? |
+| 2 | What data sources and user interaction patterns (e.g., past tasks, calendar events, email threads) should the AI leverage to generate task suggestions, and how will user privacy and data sensitivity be managed? |
+| 3 | How should the AI handle ambiguous or incomplete user requests (e.g., "remind me about that thing next week") where it must infer intent without causing errors or frustration? |
+| 4 | What key metrics (e.g., task creation time, task completion rate, user satisfaction) will we use to measure whether the AI assistance genuinely improves productivity or risks introducing friction or dependencies? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:34 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|--------------------|
+| 1 | What is the current process for capturing email metadata (sender, recipient, timestamp) and how do we ensure it captures all emails, including those sent via automated systems? |
+| 2 | How is sensitive data like email content or attachments handled in the logging system to comply with privacy regulations and prevent data leakage? |
+| 3 | What edge cases exist for email logging, such as bounced emails, failed deliveries, or external recipients, and how are these logged or flagged for follow-up? |
+| 4 | What business impact would delayed or missing email logs have on audit trails, compliance reporting, or customer dispute resolution, and how do we measure that risk? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:30 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How is the list of recipients curated and validated to ensure deliverability and avoid spam traps? |
+| 2 | What data fields are tracked for each outreach email (e.g., opens, clicks, replies, bounces) and how are they collected? |
+| 3 | How does the system handle edge cases such as duplicate contacts, invalid email addresses, or opt-out requests? |
+| 4 | What are the key performance indicators that define a successful outreach campaign, and how do these metrics influence business decisions? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:26 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How does the current stage qualification process determine when a lead moves from one stage to the next, and what criteria or thresholds are used? |
+| 2 | What data sources are currently used to inform stage qualification decisions, and how is the accuracy and completeness of that data validated? |
+| 3 | How do you handle leads that exhibit contradictory signals (e.g., high engagement but low budget) during stage qualification? |
+| 4 | If stage qualification were to become fully automated, what would be the most significant risk to pipeline quality and conversion rates? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:21 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|--------------------|
+| 1 | How is the current scoring process for identifying high-value AI opportunities conducted, and where are the main bottlenecks or manual interventions? |
+| 2 | What historical data sources (e.g., past project outcomes, resource costs, business metrics) are available to train and validate the scoring model, and how reliable are they? |
+| 3 | What edge cases exist, such as opportunities with conflicting stakeholder priorities, incomplete data, or rapidly changing market conditions, that could break the scoring logic? |
+| 4 | How will the opportunity score translate into business impact—specifically, what decisions (e.g., resource allocation, go/no-go) will be driven by the score, and how will success be measured? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:17 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How do you currently handle duplicate detection and merging, and what is the decision-making process when there are conflicting fields between duplicates? |
+| 2 | What data fields and matching criteria are used to identify duplicates, and how do you handle variations like typos, abbreviations, or multiple formats? |
+| 3 | How do you manage scenarios where multiple accounts share the same contact or where a contact appears under different accounts with different data, and what is the fallback if no clear match exists? |
+| 4 | What are the downstream effects of deduplication on sales workflows, reporting, and customer experience, and how do you measure success? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:11 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for identifying and linking accounts to contacts, and what systems or manual steps are involved? |
+| 2 | How do you ensure data quality and consistency across different data sources when matching accounts to contacts? |
+| 3 | What are the known edge cases or exceptions where account-contact identification fails or produces ambiguous results? |
+| 4 | How does inaccurate or incomplete account-contact identification impact downstream business operations, reporting, or customer engagement? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:08 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is your current process for assigning opportunities to sales reps, and what criteria or rules are used to make that decision? |
+| 2 | Which data sources or fields do you rely on for matching opportunities to assignees, and how do you handle incomplete or conflicting data? |
+| 3 | How do you handle edge cases like high-value opportunities, cross-region deals, or conflicts where a customer is already being contacted by multiple reps? |
+| 4 | What business metrics have shifted when you changed assignment logic, and how do you measure the impact on conversion rates or sales velocity? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:07:02 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How does your team currently determine the initial bid amount for a new campaign, and what steps do you follow to adjust bids over time? |
+| 2 | What historical data points (e.g., conversion rates, cost per acquisition, seasonality) do you rely on to inform bid adjustments, and how do you handle data gaps? |
+| 3 | How do you handle scenarios where a high-budget competitor enters the auction during a critical sales period, causing unexpected spikes in cost-per-click? |
+| 4 | What is the projected revenue impact if we shift from a manual bid adjustment process to an automated rule-based bidding system? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-05 03:06:56 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How do we currently capture and prioritize potential business opportunities, and what criteria are used to decide which to pursue? |
+| 2 | What historical data or market signals do we rely on to identify emerging opportunities, and how reliable is that data? |
+| 3 | Can you describe a scenario where an opportunity that appeared promising initially turned out to be a dead end, and what lessons did we learn? |
+| 4 | How do we measure the potential impact of an identified opportunity on our overall business strategy and revenue goals? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Submodule Enumeration ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 261)
+║ Time: 2026-05-05 03:06:51 UTC
+╚═════════════════════════════════════════╝
+["Opportunity Identification", "Bidding Strategy", "Opportunity Assignment", "Account/Contact Identification", "Account/Contact Deduplication", "AI Opportunity Scoring", "Stage Qualification", "Email Outreach", "Email Logging", "AI Assistance for Task Creation", "AI Cover Letter Generation", "Lost Opportunity Management", "Task & Opportunity Notifications", "BDE & Management Dashboards"]
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Overview Generation ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 241)
+║ Time: 2026-05-05 03:06:43 UTC
+╚═════════════════════════════════════════╝
+**1. Executive Summary:**
+KRH Test, a resource hiring company, is undertaking a Salesforce-centric transformation project to automate and optimise its end‑to‑end opportunity management lifecycle. The initiative leverages Sales Cloud Enterprise, Data Cloud, and the Einstein 1 Platform to inject AI‑driven validation, scoring, task assistance, and document generation into the sales process. The pre‑sales scope defines nine core requirement areas, from intelligent opportunity intake and routing to mandatory loss reporting and standard reporting dashboards. Key highlights include automated bidding strategy suggestions, AI‑based opportunity prioritisation, automated initial email outreach, Einstein Copilot task creation, and AI‑generated cover letters. The project is tightly scoped, with many advanced capabilities (multi‑step follow‑ups, full proposal generation, sentiment‑based stage progression) explicitly deferred to future phases. Success hinges on KRH providing accurate reference data, templates, and historical opportunity records to feed the AI models.
+
+**2. Company & Industry Analysis:**
+As a resource hiring company, KRH operates in a highly competitive, bid‑driven market where speed, accuracy, and informed prioritisation of opportunities are critical to securing contracts and allocating business development resources effectively. Firms in this space routinely respond to Requests for Proposals (RFPs) and must rapidly validate whether an opportunity aligns with their geographic presence and service lines, decide whether to bid as a prime or subcontractor, and mobilise the right contacts and proposal materials. Manual processes in such a context lead to delayed responses, missed assignments, and inconsistent qualification. The industry is increasingly adopting AI and automation to standardise these decisions, reduce administrative overhead, and enhance the quality of early‑stage engagement. KRH’s investment in an AI‑augmented Salesforce platform signals a move toward a more data‑driven, scalable sales operation that can better capture and convert opportunities in a crowded staffing landscape.
+
+**3. Project Scope & Key Objectives:**
+The project scope, as detailed in the pre‑sales requirements, encompasses the following functional areas:
+
+- **Opportunity Management (BRN 1.1):** Automate initial validation against KRH’s countries and lines of business; suggest a bidding strategy (Prime / Subcontracting) using Einstein AI; auto‑disqualify irrelevant opportunities; and assign qualified opportunities to Business Development Executives (BDEs) via a predefined routing matrix.
+- **Account & Contact Management (BRN 2.1):** Automatically identify and create Account/Contact records for prime contractors and opportunity POCs; perform deduplication checks; flag opportunities with missing contact information for manual BDE review.
+- **AI Opportunity Scoring & Sales Process Automation (BRN 3.1):** Use Einstein AI to score “New” opportunities and prioritise BDE focus; automatically advance opportunity stages upon assignment (e.g., from Identification to Qualification or Capture) via Salesforce Flows.
+- **Automated Email Outreach & Management (BRN 4.1):** Send a single, personalised initial email tailored to the bidding strategy (from the assigned KRH user’s name); log all inbound and outbound emails on the opportunity record. Multi‑step follow‑up sequences are out of scope.
+- **AI‑Powered Sales Assistance (BRN 5.1):** Provide an embedded Einstein Copilot allowing BDEs to create tasks with dates and descriptions using natural language commands. Full email drafting and a general‑purpose Q&A bot are out of scope.
+- **AI Document Generation (BRN 6.1):** Automatically draft a PDF Cover Letter for proposals, with content populated based on opportunity data and bidding strategy via an AI agent and a Visualforce page. Full proposal documents (management, technical, past performance) remain manual.
+- **Post‑Submission & Lost Opportunity Process (BRN 7.1):** Enforce a mandatory “Opportunity Loss Report” via a Screen Flow and validation rule before a lost opportunity can be closed; store the report in the system.
+- **Notifications (BRN 8.1):** Deliver automated reminders for upcoming tasks and management alerts for opportunities stagnant beyond a defined period, limited to five distinct custom notifications built primarily with Salesforce Flow.
+- **Reports & Dashboards (BRN 9.1):** Provide seven standard reports and one standard dashboard covering top opportunities, weekly/monthly progress, at‑risk/neglected opportunities, and individual BDE performance metrics, using out‑of‑the‑box Salesforce reporting capabilities.
+
+Key objectives are to accelerate opportunity qualification, improve resource allocation, enhance early prospect engagement, bring consistency to sales processes, and deliver actionable visibility to BDEs and management—all while minimising custom development and staying within the defined Salesforce SKU footprint.
+
+**4. Potential Risks & Ambiguities:**
+Several risks and ambiguities emerge from the defined scope and assumptions:
+
+- **Data Readiness for AI:** Basic Einstein Scoring requires sufficient historical opportunity data of good quality. If KRH’s existing data is sparse, poorly structured, or inconsistent, the AI model may produce unreliable scores, undermining BDE trust and adoption.
+- **Integration Dependency:** The solution assumes an external integration feeds opportunity data into Salesforce. Delays, data mapping errors, or unavailability of this feed could stall the entire validation and routing flow.
+- **Reliance on KRH Inputs:** The project critically depends on KRH providing country/line‑of‑business lists, a definitive assignment matrix, email templates, loss report fields, and guidance on scoring fields. Any delay or incompleteness in these artefacts will directly impact delivery timelines.
+- **Manual Confirmation & Out‑of‑Scope Exceptions:** The bidding strategy requires manual user confirmation, and the 24‑hour manual review window for “Renew” opportunities is out of scope. These handoffs could become bottlenecks if not supported by a clear operating procedure. Additionally, the manual follow‑up for email sequences limits the automation’s ability to fully nurture leads.
+- **Copilot Adoption & Prompt Discipline:** Einstein Copilot’s task creation relies on users adhering to proper prompting techniques. Without training and change management, inconsistent natural language inputs may lead to task creation errors or low adoption.
+- **Visualforce & AI Generation Quality:** The PDF cover letter uses a Visualforce page and AI to draft content. The accuracy and tone of AI‑generated text must be monitored; the approach also introduces a Visualforce dependency that may require ongoing maintenance as Salesforce evolves.
+- **Scalability of Standard Reporting:** With only seven standard reports and one dashboard, any emerging reporting needs beyond the initial scope will require a separate initiative. There is a risk that key business questions remain unanswered if the pre‑defined reports are insufficient.
+- **Duplicate Management Assumptions:** The deduplication mechanism relies on standard Salesforce rules. If the source data contains significant variability or non‑standard formats, the standard matching may fail, leading to duplicate records and data quality issues.
+- **Scope Creep on Out‑of‑Scope Items:** The clear exclusion of multi‑step follow‑ups, full proposal generation, sentiment analysis, and advanced analytics may create pressure to extend the scope once users experience the initial automation benefits, potentially straining timelines and budget.
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ User Story Generation ════════════════════════════════╗
+║ Function: core.story_generator.synthesize_user_stories (line 90)
+║ Time: 2026-05-05 02:43:55 UTC
+╚═════════════════════════════════════════╝
+[
+    {
+        "module_name": "User Authentication",
+        "sub_module_name": "Login",
+        "description": "As a registered user, I want to log in with my email and password, so that I can access my account securely.",
+        "acceptance_criteria": [
+            "GIVEN a registered user on the login page WHEN valid email and password are entered THEN the user is redirected to the dashboard.",
+            "GIVEN a user on the login page WHEN invalid credentials are entered THEN an error message is displayed and access is denied.",
+            "GIVEN a user is already logged in WHEN they attempt to access the login page THEN they are redirected to the dashboard.",
+            "GIVEN a user on the login page WHEN the email or password field is left blank and submit is clicked THEN a validation error is shown."
+        ]
+    },
+    {
+        "module_name": "User Authentication",
+        "sub_module_name": "Password Reset",
+        "description": "As a user, I want to reset my password if I forget it, so that I can regain access to my account.",
+        "acceptance_criteria": [
+            "GIVEN a user on the login page WHEN they click 'Forgot Password' THEN they are navigated to the password reset request page.",
+            "GIVEN a user on the password reset request page WHEN they enter a valid registered email and submit THEN a password reset link is sent to that email.",
+            "GIVEN a user receives a password reset link WHEN they click the link within the validity period THEN they are taken to a page to set a new password.",
+            "GIVEN a user on the set new password page WHEN they enter and confirm a new valid password THEN the password is updated and they can log in with the new password.",
+            "GIVEN a user attempts to use an expired or invalid reset link WHEN they click it THEN an error message is displayed."
+        ]
+    },
+    {
+        "module_name": "Dashboard",
+        "sub_module_name": "User Profile",
+        "description": "As a logged-in user, I want to view my profile on the dashboard, so that I can see my account details.",
+        "acceptance_criteria": [
+            "GIVEN a logged-in user on the dashboard WHEN the page loads THEN the user's profile information (e.g., name, email) is displayed.",
+            "GIVEN a logged-in user on the dashboard WHEN there is a failure to retrieve profile data THEN an appropriate error message is shown.",
+            "GIVEN a logged-in user with a complete profile WHEN viewing the dashboard THEN all mandatory profile fields are visible."
+        ]
+    }
+]
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ User Story Generation ════════════════════════════════╗
+║ Function: core.story_generator.synthesize_user_stories (line 86)
+║ Time: 2026-05-05 02:39:44 UTC
+╚═════════════════════════════════════════╝
+[
+    {
+        "module_name": "User Management",
+        "sub_module_name": "Authentication",
+        "description": "As a user, I want to log in with my email and password, so that I can access my account.",
+        "acceptance_criteria": [
+            "GIVEN a registered user with valid email and password WHEN the user enters correct credentials THEN the system logs them in and redirects to the dashboard",
+            "GIVEN a registered user WHEN the user enters an incorrect password THEN the system displays an error message and does not log in",
+            "GIVEN a non-existent email WHEN the user submits the login form THEN the system displays an error saying 'Invalid credentials'",
+            "GIVEN a user with an active session WHEN they try to log in again THEN the system may redirect to the dashboard or display a message that they are already logged in",
+            "GIVEN the login page WHEN the user submits empty fields THEN the system shows validation errors"
+        ]
+    },
+    {
+        "module_name": "User Management",
+        "sub_module_name": "Authentication",
+        "description": "As a user, I want to reset my password, so that I can regain access if I forget it.",
+        "acceptance_criteria": [
+            "GIVEN I am on the login page WHEN I click 'Forgot Password' THEN I am taken to the password reset request page",
+            "GIVEN I enter my registered email on the reset request page WHEN I submit THEN the system sends a password reset link to that email",
+            "GIVEN I have received a reset email WHEN I click the link THEN I am taken to a page to enter a new password",
+            "GIVEN I am on the password reset page WHEN I enter a new password that meets the policy (e.g., 8+ characters, one uppercase) THEN my password is updated and I am redirected to login"
+        ]
+    },
+    {
+        "module_name": "User Management",
+        "sub_module_name": "Profile",
+        "description": "As a user, I want to view my profile on a dashboard, so that I can see my personal information.",
+        "acceptance_criteria": [
+            "GIVEN I am logged in WHEN I navigate to the dashboard THEN I see my profile information such as name, email, and avatar",
+            "GIVEN I have updated my profile elsewhere WHEN I refresh the dashboard THEN the displayed information reflects the latest changes",
+            "GIVEN the dashboard is loaded WHEN I hover over my profile picture THEN a tooltip or edit option appears",
+            "GIVEN I am an admin or manager WHEN I view my dashboard THEN I also see role-specific information"
+        ]
+    }
+]
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ User Story Generation ════════════════════════════════╗
+║ Function: core.story_generator.synthesize_user_stories (line 86)
+║ Time: 2026-05-05 02:38:57 UTC
+╚═════════════════════════════════════════╝
+[
+  {
+    "module_name": "Authentication",
+    "sub_module_name": "Login",
+    "description": "As a registered user, I want to log in with my email and password, so that I can securely access my account.",
+    "acceptance_criteria": [
+      "GIVEN the user is on the login page WHEN they enter valid email and password THEN they are redirected to their dashboard.",
+      "GIVEN the user is on the login page WHEN they enter invalid credentials THEN an error message is displayed and access is denied.",
+      "GIVEN the user has a inactive or locked account WHEN they attempt login THEN a specific message indicates account status issues.",
+      "GIVEN the user enters an unregistered email WHEN attempting login THEN a generic error message is shown for security."
+    ]
+  },
+  {
+    "module_name": "Authentication",
+    "sub_module_name": "Password Reset",
+    "description": "As a user, I want to reset my password, so that I can regain access to my account if I forget it.",
+    "acceptance_criteria": [
+      "GIVEN the user is on the login page WHEN they click 'Forgot Password' and enter their registered email THEN a password reset link is sent to that email.",
+      "GIVEN the user receives a reset link WHEN they click it and enter a new valid password THEN their password is updated and they can log in with it.",
+      "GIVEN the reset link is expired or invalid WHEN the user attempts to use it THEN an error message is shown and they must request a new link.",
+      "GIVEN the user enters an unregistered email WHEN requesting a password reset THEN the system displays a generic message for security."
+    ]
+  },
+  {
+    "module_name": "User Profile",
+    "sub_module_name": "Dashboard",
+    "description": "As a logged-in user, I want to see my profile on the dashboard, so that I can quickly view my account details.",
+    "acceptance_criteria": [
+      "GIVEN the user is logged in WHEN they access the dashboard THEN their profile information (e.g., name, email, avatar) is displayed.",
+      "GIVEN the user is not logged in WHEN they try to access the dashboard URL THEN they are redirected to the login page.",
+      "GIVEN the user views their dashboard WHEN there are profile updates available THEN the dashboard reflects the latest data from the server."
+    ]
+  }
+]
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:24:13 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for collecting and validating raw data feeds into the management dashboards, and how do you ensure data completeness and accuracy before it reaches end users? |
+| 2 | How do you handle data latency or missing data points from underlying systems, and what thresholds trigger alerts or fallback visualizations in the dashboards? |
+| 3 | Can you describe a specific edge case where a user's business role or dashboard permission led to misinterpretation of metrics, and how did you address that? |
+| 4 | When a key business metric trends unexpectedly, what is the workflow for root cause analysis and how does the dashboard design support actionable decision-making rather than just reporting? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:24:08 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|---------------------|
+| 1 | How is the notification priority determined when a task deadline conflicts with an opportunity expiry, and what process governs the order of delivery? |
+| 2 | What data fields are essential for generating notifications, and how is data quality validated to prevent misleading task or opportunity alerts? |
+| 3 | How should the system handle edge cases where a user has opted out of all notifications but a critical task or opportunity requires acknowledgment? |
+| 4 | What is the business impact of notification delay on task completion rates and opportunity conversion, and how is that measured to inform optimization? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:24:05 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for identifying and classifying a lost opportunity, and who is responsible for each step? |
+| 2 | What data sources and criteria do you use to determine whether a deal is truly lost, and how do you ensure data accuracy across systems? |
+| 3 | How do you handle edge cases where a lost opportunity is later revived or where a customer churns without any recorded loss reason? |
+| 4 | What business impact does analyzing lost opportunities have on sales strategy or revenue forecasting, and how is that insight acted upon? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:24:01 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What process does the AI follow to adapt tone, structure, and keyword usage for different industries or job levels? |
+| 2 | How is the training data sourced to ensure the model can match a user's resume and job description while avoiding bias or hallucination? |
+| 3 | How does the system handle edge cases like sparse user input, contradictory experience, or extremely niche job requirements? |
+| 4 | What business metrics would validate that generated cover letters improve interview conversion rates or reduce time-to-apply? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:55 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|--------------------|
+| 1 | How does the AI ensure the generated tasks align with the user's workflow and existing project context? |
+| 2 | What data sources and training methods are used to generate task suggestions, and how are they kept updated for accuracy? |
+| 3 | How does the system handle ambiguous or incomplete user input, such as vague task descriptions or missing dependencies? |
+| 4 | What is the measurable impact on task completion rates or time saved for teams using the AI assistance versus manual creation? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:51 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for capturing and storing email metadata, and how do you ensure that every sent, received, or failed email is reliably logged? |
+| 2 | Which specific data fields are logged for each email (e.g., sender, recipient, timestamp, subject, attachments), and are there any fields that are intentionally excluded for privacy or compliance reasons? |
+| 3 | How does the system handle edge cases such as email bounces, duplicate logging, very large attachments, or emails sent to distribution lists where individual recipients need separate log entries? |
+| 4 | What business impact does the email logging have on storage costs, audit trail requirements for legal or regulatory purposes, and the ability to trace communication errors that affect customer satisfaction? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:47 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|---------------------|
+| 1 | How do we currently segment recipients for email outreach, and what data informs those decisions? |
+| 2 | What processes are in place to handle failed deliveries, spam complaints, or unsubscribes? |
+| 3 | How do we measure the business impact of email outreach beyond open and click rates? |
+| 4 | What edge cases exist for recipients using different email clients, time zones, or accessibility tools? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:44 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What criteria currently define when a lead moves from one stage to the next, and how are these criteria validated against actual conversion outcomes? |
+| 2 | How do you handle stage transitions for leads that exhibit conflicting signals, such as high engagement but low budget fit? |
+| 3 | What historical data is available to analyze stage progression rates, and what gaps exist that prevent you from predicting qualification bottlenecks? |
+| 4 | If a lead is disqualified at a later stage but was previously qualified, what process is in place to trace the decision back to the original qualification criteria? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:39 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | How does the current process identify and prioritize AI opportunities, and what criteria are used to score them? |
+| 2 | What data sources and historical metrics inform the scoring model, and how do you handle missing or incomplete data? |
+| 3 | How does the scoring system account for edge cases like projects with high potential but extreme uncertainty or regulatory constraints? |
+| 4 | What business metrics or outcomes validate that a high-scoring opportunity actually delivers expected value versus lower-scoring ones? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:36 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for identifying and merging duplicate accounts or contacts, and who is responsible for approving merges? |
+| 2 | Which data fields (e.g., name, email, phone) are used as matching criteria, and how do you handle partial matches or fuzzy logic? |
+| 3 | How do you prevent unintended merges when two records share metadata (e.g., same email but different company) and what fallback exists for false positives? |
+| 4 | What is the business impact of failing to deduplicate (e.g., reporting inaccuracies, duplicate outreach costs), and how do you currently measure deduplication success? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:31 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|---------------------------------------------------|
+| 1 | How does your team currently define and distinguish between a new account versus a duplicate contact during the identification process? |
+| 2 | What data sources and fields are most critical for accurately matching accounts and contacts, and how do you handle missing or inconsistent data? |
+| 3 | What edge cases have you encountered where the identification logic fails (e.g., common names, multiple contacts at same account, mergers)? |
+| 4 | What business decisions or downstream processes rely on the accuracy of account/contact identification, and what is the cost of a mismatch? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:25 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for assigning opportunities to team members, and how do you ensure fairness and skill alignment? |
+| 2 | What data fields are captured about each opportunity and each resource, and how is that data used to automate assignment? |
+| 3 | What happens when an opportunity has no clearly matching resource or when a resource is overbooked—how are exceptions handled? |
+| 4 | How does the assignment rule impact revenue, lead response time, and team utilization, and which metric would you improve first? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:21 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|---------------------|
+| 1 | What is the current process for adjusting bids across different ad platforms, and how are performance thresholds defined? |
+| 2 | What historical data sources (e.g., conversion rates, cost-per-click, seasonality) are available to inform bidding decisions, and how is data quality ensured? |
+| 3 | How does the bidding strategy handle edge cases such as budget overspend, zero-impression periods, or sudden traffic drops from competitor actions? |
+| 4 | What is the measurable business impact of the current bidding strategy on return on ad spend (ROAS) and overall campaign profitability? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Discovery Questions ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 359)
+║ Time: 2026-05-04 13:23:17 UTC
+╚═════════════════════════════════════════╝
+| S.No. | Discovery Question |
+|-------|-------------------|
+| 1 | What is the current process for surfacing and prioritizing potential opportunities, and where are the biggest bottlenecks or blind spots? |
+| 2 | How do you define and measure the size or viability of an opportunity, and what data sources do you rely on for validation? |
+| 3 | Can you describe an edge case where an opportunity was initially overlooked but later proved valuable, and what allowed it to be missed? |
+| 4 | What is the direct business impact when an opportunity is identified early versus late, and how does that affect resource allocation decisions? |
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Submodule Enumeration ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 261)
+║ Time: 2026-05-04 13:23:13 UTC
+╚═════════════════════════════════════════╝
+["Opportunity Identification", "Bidding Strategy", "Opportunity Assignment", "Account/Contact Identification", "Account/Contact Deduplication", "AI Opportunity Scoring", "Stage Qualification", "Email Outreach", "Email Logging", "AI Assistance for Task Creation", "AI Cover Letter Generation", "Lost Opportunity Management", "Task & Opportunity Notifications", "BDE & Management Dashboards"]
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Overview Generation ════════════════════════════════╗
+║ Function: core.briefing_generator.generate_intelligence_brief (line 241)
+║ Time: 2026-05-04 13:23:08 UTC
+╚═════════════════════════════════════════╝
+**1. Executive Summary:**
+This pre-meeting intelligence brief covers KRH, a resource hiring company, and its upcoming Salesforce implementation project. The project aims to automate and enhance the end-to-end opportunity management lifecycle, from initial bid identification through to loss reporting. Key scope items include AI-driven opportunity validation, automatic assignment, bidding strategy suggestions, account/contact deduplication, basic AI scoring, automated email outreach, AI task creation, cover letter generation, and mandatory loss reports. The solution will primarily leverage Sales Cloud Enterprise, Data Cloud, and the Einstein 1 Platform. The discovery plan document was inaccessible, so this brief is based solely on the presales scope document.
+
+**2. Company & Industry Analysis:**
+KRH operates in the resource hiring sector, likely providing personnel or staffing solutions through competitive bidding on contracts (e.g., government or commercial tenders). Their typical sales process involves evaluating requests for proposals, deciding whether to bid as a prime contractor or subcontractor, engaging with contractors and points of contact, submitting tailored proposals, and learning from losses. The business model is relationship- and process-intensive, demanding efficient opportunity triage, contact management, and repeatable proposal generation. Automation and AI can significantly reduce manual effort, improve prioritization, and enforce consistency across bids, directly impacting win rates and resource allocation.
+
+**3. Project Scope & Key Objectives:**
+The project scope encompasses nine business requirement areas across the sales process:
+- **Opportunity Management (BRN 1):** Automate validation of opportunity data against KRH’s countries and lines of business, AI-suggest a bidding strategy (Prime vs. Subcontracting), auto-disqualify irrelevant opportunities, and assign qualified ones to Business Development Executives (BDEs) via a routing matrix.
+- **Account & Contact Management (BRN 2):** Auto-create and deduplicate Account/Contact records for prime contractors and opportunity POCs; flag opportunities with no identified contacts for manual BDE review.
+- **AI Opportunity Scoring & Sales Process Automation (BRN 3):** Apply basic Einstein AI scoring to new opportunities for prioritization, and automatically advance the opportunity stage upon assignment.
+- **Automated Email Outreach (BRN 4):** Send a single, personalized initial email tailored to the bidding strategy, originating from the assigned BDE’s name, and log all related emails on the opportunity record.
+- **AI-Powered Sales Assistance (BRN 5):** Enable users to create tasks with dates and descriptions using natural language commands via an embedded Einstein Copilot agent.
+- **AI Document Generation (BRN 6):** Automatically draft a PDF cover letter for proposals, customized by bidding strategy, using a Visualforce page and AI content population.
+- **Post-Submission & Lost Opportunity Process (BRN 7):** Enforce completion of a mandatory “Opportunity Loss Report” before closing a lost opportunity.
+- **Notifications (BRN 8):** Deliver up to five distinct custom notifications, including task reminders and management alerts for stale opportunities.
+- **Reports & Dashboards (BRN 9):** Provide seven standard reports and one standard dashboard covering top opportunities, progress, at-risk items, and BDE performance metrics.
+
+Out-of-scope items explicitly excluded in this phase: auto-cloning of renew opportunities, email sentiment analysis for stage progression, multi-step email sequences, full email or Q&A bot AI, generation of full proposals beyond the cover letter, automated outreach to winning contractors, and advanced analytics beyond standard reports.
+
+**4. Potential Risks & Ambiguities:**
+- **Data Quality and AI Readiness:** Einstein Scoring assumes sufficient historical data; poor data quality or volume could render the model ineffective.
+- **Integration Dependencies:** The feed of opportunity data into Salesforce is an external integration; delays, mismatched fields, or downtime will directly impact automation.
+- **Client-Provided Content Delays:** Functional assumptions rely on KRH delivering definitive lists (countries, lines of business, assignment matrix, email templates, cover letter content). Late or incomplete inputs would stall configuration.
+- **User Adoption and Manual Touchpoints:** Several processes require manual confirmation (bidding strategy) and BDE review of missing contacts; low user adherence could create bottlenecks.
+- **Technical Constraints:** Email sending uses standard Salesforce functionality, which may face governor limits or compliance restrictions. Visualforce-based PDF generation with AI content may require significant custom logic and rigorous quality assurance to avoid errors.
+- **Scope Creep Potential:** Out-of-scope capabilities (full document generation, multi-step emails) are likely future requests; clear expectation management is needed.
+- **Missing Discovery Plan:** The inability to load the Discovery Plan document leaves gaps in understanding workshop logistics, timeline, stakeholder roles, and specific requirement-gathering priorities.
+- **Industry Terminology:** “Resource hiring” and “Prime vs. Subcontracting” may carry specific nuances (e.g., government procurement). Misalignment on these definitions could lead to incorrect process design.
+
+════════════════════════════════════════════════════════════════════════════════
+
+╔═ Post Meeting Analysis ════════════════════════════════╗
 ║ Function: core.post_meeting_analyzer.call_llm_json (line 331)
 ║ Time: 2026-04-15 13:45:09 UTC
 ╚═════════════════════════════════════════╝

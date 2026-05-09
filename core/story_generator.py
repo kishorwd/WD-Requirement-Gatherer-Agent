@@ -1,204 +1,188 @@
 import json
-from typing import List, Dict, Any, Optional, Union
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
-from langchain.schema import HumanMessage, SystemMessage
+from typing import List, Dict, Any
 import logging
 import os
 from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
-# Load environment variables
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class StoryGenerator:
-    def __init__(self, model_name: str = None, temperature: float = 0.2):
-        """
-        Initialize the StoryGenerator with the specified model and temperature.
-        If model_name is not provided, it will use the value from LLM_MODEL environment variable
-        or default to 'gemini-2.5-flash'.
-        """
-        self.model_name = model_name or os.getenv("LLM_MODEL", "gemini-2.5-flash")
-        self.temperature = temperature
-        self.llm = self._initialize_llm()
-        
-        # Initialize the prompt template
-        self.prompt_template = """You are an expert Business Analyst. Your task is to analyze the following raw requirements 
-        and convert them into well-structured user stories with clear acceptance criteria.
-        
-        Instructions:
-        1. Group related requirements by modules and sub-modules
-        2. Remove any duplicates
-        3. Format each requirement as a user story following this structure:
-           - Module Name
-           - Sub-module Name
-           - Description (As a [User], I want [Action], so that [Benefit])
-           - User Acceptance Criteria (3-5 bullet points, each starting with 'GIVEN/WHEN/THEN')
-        
-        Raw Requirements:
-        {requirements_text}
-        
-        Return your response as ONLY valid JSON — no markdown, no explanations, no code fences.
-        Ensure it is strictly a JSON array following this exact schema:
-        [
-            {
-                "module_name": "Module Name",
-                "sub_module_name": "Sub-module Name",
-                "description": "As a [User], I want [Action], so that [Benefit]",
-                "acceptance_criteria": [
-                    "GIVEN [context] WHEN [action] THEN [outcome]",
-                    "GIVEN [context] WHEN [action] THEN [outcome]"
-                ]
-            }
-        ]
-        Ensure the JSON is 100% valid, properly closed, and does not include comments or extra text.
+def load_prompt(filename: str) -> str:
+    path = os.path.join(os.path.dirname(__file__), "..", "sub_agents", filename)
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
 
-        """.replace('{', '{{').replace('}', '}}').replace('{{requirements_text}}', '{requirements_text}')
+
+def _init_client() -> AsyncOpenAI:
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise ValueError("DEEPSEEK_API_KEY environment variable not set")
+    return AsyncOpenAI(
+        api_key=api_key,
+        base_url="https://api.deepseek.com",
+        timeout=180.0, # 3 minutes per module
+    )
+
+
+async def synthesize_user_stories_stream(raw_requirements_text: str):
+    """
+    Streaming version of synthesize_user_stories.
+    Yields dicts with 'status' and 'message'.
+    Final yield is the list of stories.
+    """
+    if not raw_requirements_text or not raw_requirements_text.strip():
+        yield {"status": "error", "message": "No requirements provided"}
+        return
+
+    try:
+        from .graph_workflows import story_review_graph
+
+        initial_state = {
+            "requirements_text": raw_requirements_text,
+            "draft_stories": "",
+            "validated_stories": [],
+            "review_status": "PENDING",
+            "review_feedback": "",
+            "review_cycle": 0,
+        }
+
+        # Use LangGraph astream to track progress
+        async for event in story_review_graph.astream(initial_state, stream_mode="updates"):
+            # event is a dict mapping node_name -> output_of_node
+            for node_name, output in event.items():
+                if node_name == "generate":
+                    cycle = output.get("review_cycle", 1)
+                    if cycle == 1:
+                        yield {"status": "progress", "message": "🤖 Story Agent is drafting stories...", "step": 2}
+                    else:
+                        yield {"status": "progress", "message": f"🔄 Reworking stories based on feedback (Cycle {cycle-1})...", "step": 2}
+                
+                elif node_name == "review":
+                    status = output.get("review_status")
+                    feedback = output.get("review_feedback")
+                    if status == "REWORK":
+                        yield {"status": "progress", "message": f"🔍 Agile Coach found issues: {feedback[:100]}...", "step": 3}
+                    else:
+                        yield {"status": "progress", "message": "✅ Agile Coach approved the stories!", "step": 4}
+
+        # Get final state to return stories
+        # Since we use astream, we need to keep track of the final validated_stories
+        # Or just run one final ainvoke to get the full state if needed, but astream updates should have it
+        # Actually, the last event in 'updates' mode for a node that finishes will have the state change.
+        # Let's just do a final ainvoke if we want the full end state easily, or track it in the loop.
         
-    def _initialize_llm(self):
-        """Initialize the language model with proper error handling."""
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            logger.error("GOOGLE_API_KEY environment variable not set")
-            raise ValueError("GOOGLE_API_KEY environment variable not set")
-            
-        try:
-            return ChatGoogleGenerativeAI(
-                model=self.model_name,
-                google_api_key=api_key,
-                temperature=self.temperature,
-                convert_system_message_to_human=True
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize language model: {str(e)}")
-            raise
+        final_state = await story_review_graph.ainvoke(initial_state)
+        validated = final_state.get("validated_stories", [])
+        yield {"status": "complete", "stories": validated}
 
-    async def synthesize_user_stories(self, raw_requirements_text: str) -> List[Dict[str, Any]]:
-        """
-        Process raw requirements text and generate structured user stories.
-        
-        Args:
-            raw_requirements_text: Raw text containing requirements
-            
-        Returns:
-            List of dictionaries containing structured user stories
-            
-        Raises:
-            ValueError: If the AI response cannot be parsed as valid JSON
-            Exception: For any other errors during processing
-        """
-        try:
-            # Input validation
-            if not raw_requirements_text or not raw_requirements_text.strip():
-                logger.warning("Empty or invalid requirements text provided")
-                return []
-                
-            logger.info("Generating user stories from requirements...")
-            
-            try:
-                # Format the prompt with the requirements text
-                prompt = self.prompt_template.format(
-                    requirements_text=raw_requirements_text
-                )
-                
-                # Get response from the language model
-                response = await self.llm.agenerate([[HumanMessage(content=prompt)]])
-                response_text = response.generations[0][0].text.strip()
-                
-                logger.debug(f"Raw AI response: {response_text[:500]}...")  # Log first 500 chars of response
-                
-                # Clean the response to extract just the JSON part
-                json_start = response_text.find('[')
-                json_end = response_text.rfind(']') + 1
-                
-                if json_start == -1 or json_end == 0:
-                    logger.error("No valid JSON array found in AI response")
-                    logger.debug(f"Response content: {response_text}")
-                    raise ValueError("The AI response did not contain a valid JSON array")
-                    
-                json_str = response_text[json_start:json_end]
-                
-                # Parse the JSON response
-                stories = json.loads(json_str)
-                
-                # Validate the structure
-                if not isinstance(stories, list):
-                    raise ValueError("Expected a list of stories in the response")
-                
-                if not stories:
-                    logger.warning("No stories were generated from the requirements")
-                    return []
-                    
-                # Process and validate each story
-                validated_stories = []
-                for i, story in enumerate(stories, 1):
-                    try:
-                        if not isinstance(story, dict):
-                            logger.warning(f"Skipping invalid story format at index {i-1}")
-                            continue
-                            
-                        # Ensure all required fields exist with defaults
-                        validated_story = {
-                            'brn': f"BRN-{i:03d}",
-                            'sub_brn': f"BRN-{i:03d}.1",
-                            'module_name': str(story.get('module_name', 'Uncategorized')).strip() or 'Uncategorized',
-                            'sub_module_name': str(story.get('sub_module_name', 'General')).strip() or 'General',
-                            'description': str(story.get('description', '')).strip(),
-                            'acceptance_criteria': [
-                                str(crit).strip() 
-                                for crit in story.get('acceptance_criteria', []) 
-                                if str(crit).strip()
-                            ]
-                        }
-                        
-                        # Only include stories with a description
-                        if validated_story['description']:
-                            validated_stories.append(validated_story)
-                            
-                    except Exception as e:
-                        logger.warning(f"Error processing story at index {i-1}: {str(e)}", exc_info=True)
-                        continue
-                
-                logger.info(f"Successfully generated {len(validated_stories)} valid user stories")
-                return validated_stories
-                
-            except json.JSONDecodeError as je:
-                logger.error(f"Failed to parse JSON from AI response: {str(je)}")
-                logger.debug(f"JSON string that failed to parse: {json_str if 'json_str' in locals() else 'N/A'}")
-                raise ValueError(f"Failed to parse AI response: {str(je)}")
-                
-            except Exception as e:
-                logger.error(f"Error during story generation: {str(e)}", exc_info=True)
-                raise
-                
-        except Exception as e:
-            logger.error(f"Unexpected error in synthesize_user_stories: {str(e)}", exc_info=True)
-            raise
-            
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse AI response as JSON: {str(e)}")
-            logger.debug(f"Response content: {response_text}")
-            raise ValueError("Failed to parse AI response. The response was not valid JSON.")
-            
-        except Exception as e:
-            logger.error(f"Error in synthesize_user_stories: {str(e)}", exc_info=True)
-            raise
+    except Exception as e:
+        logger.error(f"Streaming story generation failed: {e}")
+        yield {"status": "error", "message": str(e)}
 
-# Singleton instance
-story_generator = StoryGenerator()
-
-# Async function for direct import
 async def synthesize_user_stories(raw_requirements_text: str) -> List[Dict[str, Any]]:
-    """
-    Async function to generate user stories from raw requirements.
+    if not raw_requirements_text or not raw_requirements_text.strip():
+        return []
+
+    # ── Try LangGraph review loop first ──
+    try:
+        from .graph_workflows import story_review_graph
+
+        graph_result = await story_review_graph.ainvoke({
+            "requirements_text": raw_requirements_text,
+            "draft_stories": "",
+            "validated_stories": [],
+            "review_status": "PENDING",
+            "review_feedback": "",
+            "review_cycle": 0,
+        })
+
+        validated = graph_result.get("validated_stories", [])
+        cycles = graph_result.get("review_cycle", 1)
+        verdict = graph_result.get("review_status", "PASS")
+        logger.info(
+            "Story review loop done | cycles=%d verdict=%s stories=%d",
+            cycles, verdict, len(validated)
+        )
+        if validated:
+            return validated
+        # If graph returned empty, fall through to single-shot
+        logger.warning("Story review graph returned 0 stories, falling back to single-shot.")
+    except Exception as e:
+        logger.error(f"Story review graph failed, falling back to single-shot: {e}")
+
+    # ── Fallback: original single-shot generation ──
+    client = _init_client()
+    model_name = os.getenv("LLM_MODEL_PRO", "deepseek-v4-pro")
     
-    Args:
-        raw_requirements_text: Raw text containing requirements
+    try:
+        max_tokens = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "4096"))
+    except:
+        max_tokens = 4096
+
+    prompt_template = load_prompt("story_generator.md")
+    prompt = prompt_template.format(requirements_text=raw_requirements_text)
+
+    logger.info(f"Calling DeepSeek API ({model_name}) for story generation (single-shot fallback)...")
+    try:
+        response = await client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are a professional business analyst that outputs only valid JSON arrays."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            max_tokens=max_tokens
+        )
+        response_text = response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"DeepSeek API call failed: {str(e)}")
+        raise ValueError(f"AI generation failed: {str(e)}")
+
+    if not response_text:
+        return []
+
+    # Robust JSON extraction
+    try:
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+
+        json_start = response_text.find("[")
+        json_end = response_text.rfind("]") + 1
+
+        if json_start == -1 or json_end == 0:
+            json_start = response_text.find("{")
+            json_end = response_text.rfind("}") + 1
+            
+        if json_start == -1 or json_end == 0:
+            logger.error(f"No JSON found in response snippet: {response_text[:200]}")
+            return []
+
+        json_str = response_text[json_start:json_end]
+        data = json.loads(json_str)
+        stories = data if isinstance(data, list) else [data]
         
-    Returns:
-        List of dictionaries containing structured user stories
-    """
-    return await story_generator.synthesize_user_stories(raw_requirements_text)
+    except Exception as e:
+        logger.error(f"JSON parsing failed: {e}")
+        return []
+
+    validated = []
+    for story in stories:
+        if not isinstance(story, dict):
+            continue
+        desc = story.get("description", story.get("userStory", ""))
+        if not desc:
+            continue
+            
+        validated.append({
+            "module_name": str(story.get("module_name", "Uncategorized")).strip(),
+            "sub_module_name": str(story.get("sub_module_name", "General")).strip(),
+            "description": str(desc).strip(),
+            "acceptance_criteria": [str(c).strip() for c in story.get("acceptance_criteria", story.get("acceptanceCriteria", [])) if str(c).strip()]
+        })
+
+    return validated
+

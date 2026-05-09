@@ -4,16 +4,17 @@ import json
 from dotenv import load_dotenv
 
 load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
+api_key = os.getenv("DEEPSEEK_API_KEY")
 
-url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-response = requests.get(url)
+url = "https://api.deepseek.com/models"
+headers = {"Authorization": f"Bearer {api_key}"}
+response = requests.get(url, headers=headers)
 
 if response.status_code == 200:
-    models = response.json().get("models", [])
+    models = response.json().get("data", [])
     result = []
     for m in models:
-        result.append(m['name'])
+        result.append(m['id'])
     
     with open("valid_models.json", "w") as f:
         json.dump(result, f, indent=2)

@@ -1,7 +1,36 @@
-import { useState, useEffect } from 'react';
-import { generateStories } from '../api/client';
+import { useState, useEffect, useRef } from 'react';
+import { generateStories, getExistingStories } from '../api/client';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { useProject } from '../context/ProjectContext';
+
+// Agent-themed progress messages that rotate while the backend works
+// Covers up to 30+ minutes of processing for large projects
+const AGENT_MESSAGES = [
+  { message: '📡 Connecting to multi-agent swarm...', step: 0, delay: 0 },
+  { message: '📂 Fetching project requirements...', step: 0, delay: 3000 },
+  { message: '📦 Grouping requirements by modules...', step: 1, delay: 6000 },
+  { message: '🤖 Story Agent is drafting user stories (Module 1)...', step: 2, delay: 10000 },
+  { message: '✍️ Writing structured GIVEN/WHEN/THEN descriptions...', step: 2, delay: 25000 },
+  { message: '🔍 Agile Coach reviewing Module 1 stories...', step: 3, delay: 45000 },
+  { message: '✅ Module 1 approved! Moving to next module...', step: 3, delay: 65000 },
+  { message: '🤖 Story Agent drafting Module 2 stories...', step: 2, delay: 85000 },
+  { message: '🔍 Agile Coach reviewing Module 2...', step: 3, delay: 110000 },
+  { message: '✅ Module 2 approved! Processing next...', step: 3, delay: 135000 },
+  { message: '🤖 Story Agent processing Module 3...', step: 2, delay: 160000 },
+  { message: '🔍 Agile Coach reviewing Module 3...', step: 3, delay: 190000 },
+  { message: '🔁 Processing remaining modules...', step: 3, delay: 220000 },
+  { message: '🤖 Story Agent still working... large projects take time...', step: 2, delay: 260000 },
+  { message: '🔍 Agile Coach reviewing additional modules...', step: 3, delay: 300000 },
+  { message: '⏳ Almost there... reviewing final modules...', step: 4, delay: 360000 },
+  { message: '🔄 Multi-Agent loop processing... please be patient...', step: 4, delay: 420000 },
+  { message: '📊 Processing large requirement set... still running...', step: 4, delay: 500000 },
+  { message: '🔍 Final review cycles in progress...', step: 4, delay: 600000 },
+  { message: '⏳ Wrapping up... this is a large project...', step: 5, delay: 720000 },
+  { message: '💾 Finalizing and persisting stories...', step: 5, delay: 900000 },
+  { message: '🔁 Still processing... the backend is working hard...', step: 5, delay: 1200000 },
+  { message: '⏳ Hang tight... almost done...', step: 5, delay: 1500000 },
+  { message: '🔁 Large multi-module projects can take 15-30 minutes...', step: 5, delay: 1800000 },
+];
 
 export default function UserStories() {
   const { selectedProjectId, projectDetail } = useProject();
@@ -10,13 +39,59 @@ export default function UserStories() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [currentStep, setCurrentStep] = useState(0);
+  const timersRef = useRef([]);
 
   // Reset when project changes
   useEffect(() => {
     setStories([]);
     setGenerated(false);
     setError('');
+
+    if (selectedProjectId) {
+      loadExistingStories(selectedProjectId);
+    }
   }, [selectedProjectId]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => timersRef.current.forEach(t => clearTimeout(t));
+  }, []);
+
+  const loadExistingStories = async (projectId) => {
+    setLoading(true);
+    try {
+      const data = await getExistingStories(projectId);
+      if (data && data.length > 0) {
+        setStories(data);
+        setGenerated(true);
+      }
+    } catch (err) {
+      console.error('Error loading existing stories:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startProgressSimulation = () => {
+    // Clear any previous timers
+    timersRef.current.forEach(t => clearTimeout(t));
+    timersRef.current = [];
+
+    AGENT_MESSAGES.forEach(({ message, step, delay }) => {
+      const timer = setTimeout(() => {
+        setStatusMessage(message);
+        setCurrentStep(step);
+      }, delay);
+      timersRef.current.push(timer);
+    });
+  };
+
+  const stopProgressSimulation = () => {
+    timersRef.current.forEach(t => clearTimeout(t));
+    timersRef.current = [];
+  };
 
   const handleGenerate = async () => {
     if (!selectedProjectId) return;
@@ -24,12 +99,48 @@ export default function UserStories() {
     setLoading(true);
     setStories([]);
     setGenerated(false);
+    setStatusMessage('📡 Connecting to multi-agent swarm...');
+    setCurrentStep(0);
+
+    // Start the visual progress simulation
+    startProgressSimulation();
+
     try {
       const data = await generateStories(selectedProjectId);
+      stopProgressSimulation();
       setStories(data);
       setGenerated(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to generate user stories.');
+      stopProgressSimulation();
+      console.error('Generation error:', err);
+
+      // AUTO-RECOVERY: The backend may have saved stories to DB even if
+      // the frontend connection timed out. Check the database first.
+      try {
+        const savedStories = await getExistingStories(selectedProjectId);
+        if (savedStories && savedStories.length > 0) {
+          setStories(savedStories);
+          setGenerated(true);
+          setError('');  // Clear error — we recovered!
+          console.log('Auto-recovered %d stories from database', savedStories.length);
+          setLoading(false);
+          return;
+        }
+      } catch (recoveryErr) {
+        console.error('Recovery check failed:', recoveryErr);
+      }
+
+      // If recovery didn't find stories, show the original error
+      const detail = err.response?.data?.detail;
+      const message = err.message;
+
+      if (detail) {
+        setError(typeof detail === 'string' ? detail : JSON.stringify(detail));
+      } else if (message) {
+        setError(`Network Error: ${message}. The backend may still be processing — try refreshing in a few minutes.`);
+      } else {
+        setError('An unknown error occurred during story generation.');
+      }
     } finally {
       setLoading(false);
     }
@@ -78,15 +189,16 @@ export default function UserStories() {
       {loading && (
         <LoadingOverlay
           title="Generating User Stories"
-          message="Synthesizing requirements into structured stories..."
+          message={statusMessage}
           steps={[
             'Fetching project requirements...',
             'Grouping by modules...',
-            'Generating story descriptions...',
-            'Writing acceptance criteria...',
+            'Multi-Agent Story Generation...',
+            'Agile Coach Review...',
+            'Final Approval & Cleanup',
             'Finalizing BRNs...',
           ]}
-          currentStep={2}
+          currentStep={currentStep}
         />
       )}
 

@@ -1,6 +1,0 @@
-[theme]
-primaryColor="#00B140"           # Bright green used for buttons and main backgrounds
-backgroundColor="#FFFFFF"        # Standard white background
-secondaryBackgroundColor="#F5F5F5" # Light gray used subtly in some areas
-textColor="#333333"              # Dark gray used for body text
-font="sans-serif"

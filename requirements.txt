@@ -3,13 +3,11 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 
-# Frontend
-streamlit
-
-# Core AI & Utilities
+# Core AI & Utilities (DeepSeek V3 via OpenAI-compatible SDK)
 langchain
-langchain-google-genai
 langchain-openai
+langgraph
+openai
 python-dotenv
 requests
 python-multipart

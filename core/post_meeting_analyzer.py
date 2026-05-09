@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from io import BytesIO
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 import re
 import pandas as pd
 
@@ -17,22 +17,33 @@ from .llm_logger import log_llm_response
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
+def load_prompt(filename: str) -> str:
+    path = os.path.join(os.path.dirname(__file__), "..", "sub_agents", filename)
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
 # ------------------------
 # Helper: Initialize LLM
 # ------------------------
-def init_llm():
-    api_key = os.getenv("GOOGLE_API_KEY")
+def init_llm(use_flash: bool = False):
+    """Initialize LLM. use_flash=True selects the fast Flash model for simple extraction tasks."""
+    api_key = os.getenv("DEEPSEEK_API_KEY")
     if not api_key:
-        logging.warning("[POST-MEETING] GOOGLE_API_KEY not found. Using fallback output.")
+        logging.warning("[POST-MEETING] DEEPSEEK_API_KEY not found. Using fallback output.")
         return None
-    model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+    if use_flash:
+        model_name = os.getenv("LLM_MODEL_FLASH", "deepseek-v4-flash")
+    else:
+        model_name = os.getenv("LLM_MODEL_PRO", "deepseek-v4-pro")
     try:
-        llm = ChatGoogleGenerativeAI(
+        llm = ChatOpenAI(
             model=model_name,
-            google_api_key=api_key,
+            api_key=api_key,
+            base_url="https://api.deepseek.com",
             temperature=0.0
         )
-        logging.info("[POST-MEETING] LLM initialized | model='%s'", model_name)
+        variant = "Flash — fast extraction" if use_flash else "Pro — reasoning"
+        logging.info("[POST-MEETING] LLM initialized | model='%s' (%s)", model_name, variant)
         return llm
     except Exception as e:
         logging.error("[POST-MEETING] Failed to init LLM: %s", e)
@@ -239,36 +250,24 @@ async def extract_speakers_llm(transcript: str) -> List[str]:
 
     Returns a list of names (strings). If the LLM/key is unavailable, returns an empty list.
     """
-    llm = init_llm()
+    # Speaker extraction is a simple task → use Flash for speed
+    llm = init_llm(use_flash=True)
     if not llm:
         return []
         
     # Prepare metadata for logging
+    flash_model = os.getenv("LLM_MODEL_FLASH", "deepseek-v4-flash")
     metadata = {
         'stage': 'speaker_extraction',
-        'model': os.getenv("LLM_MODEL", "gemini-2.5-flash"),
+        'model': flash_model,
         'transcript_length': len(transcript),
         'timestamp': pd.Timestamp.utcnow().isoformat()
     }
 
-    system_instructions = (
-        "You extract ONLY human speaker names from meeting transcripts. "
-        "Return STRICT JSON with a single key 'speakers' containing an array of distinct names. "
-        "Guidelines: Names are 1-3 words, capitalized properly. Exclude roles/titles (e.g., 'Manager'), "
-        "exclude generic words, timestamps, and acronyms. If unsure, omit. "
-        "CRITICAL: If a speaker is referred to with both first and last name, "
-        "return the FULL multi-word name (e.g., 'Priya Sharma'), not split parts."
-    )
-
-    user_prompt = (
-        "Transcript:\n" + transcript +
-        "\n\nOutput JSON schema (no prose, no code fences): {\"speakers\": [\"Name\", ...]}"
-    )
+    prompt_template = load_prompt("speaker_extraction.md")
+    full_prompt = prompt_template.format(transcript=transcript)
 
     try:
-        # Combine system instructions and user prompt
-        full_prompt = system_instructions + "\n\n" + user_prompt
-        
         # Call the LLM
         msg = await llm.ainvoke(full_prompt)
         content = getattr(msg, "content", "").strip()
@@ -307,6 +306,92 @@ async def extract_speakers_llm(transcript: str) -> List[str]:
 # ------------------------
 # Core Analyzer Function
 # ------------------------
+async def analyze_transcript_text_stream(
+    transcript: str,
+    speaker_tags: Dict[str, str],
+    discovery_plan: Dict[str, Any],
+    sow_text: str
+):
+    """
+    Streaming version of analyze_transcript_text.
+    Yields progress updates for each stage.
+    """
+    llm = init_llm()
+    if not llm:
+        yield {"status": "error", "message": "LLM not initialized"}
+        return
+
+    # Preparation
+    transcript_block = transcript
+    discovery_block = json.dumps(discovery_plan, ensure_ascii=False, indent=2)
+    speaker_tags_block = json.dumps(speaker_tags, ensure_ascii=False, indent=2)
+    
+    # SOW formatting
+    try:
+        if isinstance(sow_text, str) and (sow_text.startswith('{') or sow_text.startswith('[')):
+            sow_json = json.loads(sow_text)
+            sow_block = json.dumps(sow_json, ensure_ascii=False, indent=2)
+        else:
+            sow_block = json.dumps({"sow_text": sow_text}, ensure_ascii=False, indent=2)
+    except:
+        sow_block = json.dumps({"sow_text": str(sow_text)}, ensure_ascii=False, indent=2)
+
+    aggregated = {
+        "mom": "",
+        "on_track_topics": [],
+        "off_track_topics": [],
+        "provisional_user_stories": [],
+        "open_topics": []
+    }
+
+    # Stage 1: MoM via LangGraph
+    yield {"status": "progress", "message": "🤖 Starting MoM Agent (Actor-Critic loop)...", "step": 1}
+    try:
+        from .graph_workflows import mom_review_graph
+        initial_state = {
+            "transcript": transcript_block,
+            "speaker_tags_block": speaker_tags_block,
+            "discovery_block": discovery_block,
+            "sow_block": sow_block,
+            "draft_mom": "",
+            "review_status": "PENDING",
+            "review_feedback": "",
+            "review_cycle": 0,
+        }
+        async for event in mom_review_graph.astream(initial_state, stream_mode="updates"):
+            for node_name, output in event.items():
+                if node_name == "generate":
+                    cycle = output.get("review_cycle", 1)
+                    if cycle == 1:
+                        yield {"status": "progress", "message": "✍️ Drafting initial Minutes of Meeting...", "step": 1}
+                    else:
+                        yield {"status": "progress", "message": f"🔄 Reworking MoM based on feedback (Cycle {cycle-1})...", "step": 1}
+                elif node_name == "review":
+                    status = output.get("review_status")
+                    feedback = output.get("review_feedback")
+                    if status == "REWORK":
+                        yield {"status": "progress", "message": f"🔍 MoM Reviewer requested changes: {feedback[:80]}...", "step": 1}
+                    else:
+                        yield {"status": "progress", "message": "✅ MoM Reviewer approved the draft!", "step": 1}
+        
+        final_mom_state = await mom_review_graph.ainvoke(initial_state)
+        aggregated["mom"] = sanitize_mom_html(final_mom_state.get("draft_mom", ""))
+    except Exception as e:
+        logger.error(f"MoM stream failed: {e}")
+
+    # Stage 2: Topics
+    yield {"status": "progress", "message": "📈 Extracting On-Track topics...", "step": 2}
+    # ... we could do detailed streaming here too but let's do high-level steps for now
+    
+    # We'll call the original function for the rest but wrap it in progress messages
+    # Or just copy the logic briefly. To keep it simple and consistent:
+    result = await analyze_transcript_text(transcript, speaker_tags, discovery_plan, sow_text)
+    result["mom"] = aggregated["mom"] # preserve the one we streamed
+    
+    yield {"status": "progress", "message": "📉 Identifying Off-Track topics...", "step": 3}
+    yield {"status": "progress", "message": "📝 Extracting Provisional Requirements...", "step": 4}
+    yield {"status": "complete", "analysis_result": result}
+
 async def analyze_transcript_text(
     transcript: str,
     speaker_tags: Dict[str, str],
@@ -323,7 +408,7 @@ async def analyze_transcript_text(
             metadata = metadata or {}
             metadata.update({
                 'stage': 'post_meeting_analysis',
-                'model': os.getenv("LLM_MODEL", "gemini-2.5-flash"),
+                'model': os.getenv("LLM_MODEL_PRO", "deepseek-v4-pro"),
                 'timestamp': pd.Timestamp.utcnow().isoformat()
             })
             msg_loc = await llm.ainvoke(prompt_text)
@@ -364,7 +449,7 @@ async def analyze_transcript_text(
         try:
             metadata = {
                 'stage': stage,
-                'model': os.getenv("LLM_MODEL", "gemini-2.5-flash"),
+                'model': os.getenv("LLM_MODEL_PRO", "deepseek-v4-pro"),
                 'timestamp': pd.Timestamp.utcnow().isoformat()
             }
             msg_loc = await llm.ainvoke(prompt_text)
@@ -411,81 +496,43 @@ async def analyze_transcript_text(
     if llm:
         logging.info("[POST-MEETING] Starting LLM analysis with 5 specialized prompts...")
         
-        # 1) MoM
-        logging.info("[POST-MEETING] Processing MoM prompt...")
-        mom_prompt = f"""
-CRITICAL INSTRUCTION — READ FIRST:
-You MUST output ONLY valid HTML. Do NOT use Markdown syntax of any kind.
-Do NOT use: pipe tables (| col |), **bold**, ## headings, - bullets, or ```code fences```.
-Your ENTIRE response must be a single HTML fragment starting with <div class="mom-report">.
-No preamble. No explanation. No code fences. Start directly with <div.
-
----
-
-You are a professional Business Analyst generating the Minutes of Meeting (MoM) as a structured HTML document.
-
-Your output MUST:
-1. Start with <div class="mom-report">
-2. Use <h2> for the meeting title
-3. Use a <p> block for Date, Organizer, and Attendees (using <strong> labels and <br> separators)
-4. Use <h3> sections for: 📌 Key Discussions, 🎯 Key Decisions, 🚀 Action Items
-5. Use <ul><li> for all bullet content
-6. For Action Items: wrap the owner name in <strong style="color:#ef4444;">Owner:</strong>
-7. End with </div>
-
-EXACT OUTPUT FORMAT (follow this structure precisely):
-
-<div class="mom-report">
-  <h2 style="color:#6366f1;border-bottom:1px solid #333;padding-bottom:8px;">Meeting Minutes: [Agenda Title]</h2>
-  <p>
-    <strong>📅 Date:</strong> [Date]<br>
-    <strong>👤 Organizer:</strong> [Organizer]<br>
-    <strong>👥 Attendees:</strong> [Name (Role), Name (Role), ...]
-  </p>
-
-  <h3 style="color:#a8b1ff;margin-top:24px;">📌 Key Discussions</h3>
-  <ul style="line-height:1.7;">
-    <li><strong>[Topic Title]:</strong> [One concise sentence summarizing the discussion point. Then bullet sub-items if needed.]</li>
-    <li><strong>[Topic Title]:</strong> [...]</li>
-  </ul>
-
-  <h3 style="color:#a8b1ff;margin-top:24px;">🎯 Key Decisions</h3>
-  <ul style="line-height:1.7;">
-    <li>[Decision made in the meeting.]</li>
-  </ul>
-
-  <h3 style="color:#a8b1ff;margin-top:24px;">🚀 Action Items</h3>
-  <ul style="line-height:1.7;list-style-type:square;">
-    <li><strong style="color:#ef4444;">[Owner/Team]:</strong> [Specific task to be done.]</li>
-  </ul>
-</div>
-
-RULES FOR CONTENT:
-- Attendees: use ONLY names from Speaker Tags below. Format: Name (Role), Name (Role).
-- Key Discussions: 6–10 distinct professional topic points. No paragraphs — bullets only.
-- Key Decisions: concrete decisions made during the meeting.
-- Action Items: aggressively extract all tasks/commitments with owners. Assign to team if no person named.
-- Exclude: small talk, scheduling, technical troubleshooting.
-- If no action items exist, write: <li>No specific action items identified.</li>
-
----
-
-INPUT DATA:
-Transcript: {transcript_block}
-Speaker Tags (name→role): {speaker_tags_block}
-Discovery Plan (context): {discovery_block}
-SOW (context): {sow_block}
-
-Remember: Output ONLY the HTML. Start with <div class="mom-report">. No markdown. No code fences.
-        """
-
+        # 1) MoM — via LangGraph review loop
+        logging.info("[POST-MEETING] Processing MoM via LangGraph review loop...")
         try:
-            logging.info("[POST-MEETING] Sending MOM prompt to LLM (raw HTML mode)...")
-            mom_raw = await call_llm_raw(mom_prompt, stage='mom')
-            aggregated["mom"] = sanitize_mom_html(mom_raw)
-            logging.info(f"[POST-MEETING] MoM result length: {len(aggregated['mom'])} chars")
+            from .graph_workflows import mom_review_graph
+            mom_graph_result = await mom_review_graph.ainvoke({
+                "transcript": transcript_block,
+                "speaker_tags_block": speaker_tags_block,
+                "discovery_block": discovery_block,
+                "sow_block": sow_block,
+                "draft_mom": "",
+                "review_status": "PENDING",
+                "review_feedback": "",
+                "review_cycle": 0,
+            })
+            raw_mom = mom_graph_result.get("draft_mom", "")
+            cycles_used = mom_graph_result.get("review_cycle", 1)
+            review_verdict = mom_graph_result.get("review_status", "PASS")
+            aggregated["mom"] = sanitize_mom_html(raw_mom)
+            logging.info(
+                "[POST-MEETING] MoM review loop done | cycles=%d verdict=%s length=%d",
+                cycles_used, review_verdict, len(aggregated["mom"])
+            )
         except Exception as e:
-            logging.error(f"[POST-MEETING] MoM prompt failed: {e}")
+            logging.error(f"[POST-MEETING] MoM review loop failed: {e}")
+            # Fallback: try single-shot generation without review
+            try:
+                mom_prompt_template = load_prompt("mom_generator.md")
+                mom_prompt = mom_prompt_template.format(
+                    transcript_block=transcript_block,
+                    speaker_tags_block=speaker_tags_block,
+                    discovery_block=discovery_block,
+                    sow_block=sow_block
+                )
+                mom_raw = await call_llm_raw(mom_prompt, stage='mom')
+                aggregated["mom"] = sanitize_mom_html(mom_raw)
+            except Exception as e2:
+                logging.error(f"[POST-MEETING] MoM fallback also failed: {e2}")
 
         # ------------------------
         # Helper: Format On-Track Topics as Markdown Table
@@ -506,41 +553,12 @@ Remember: Output ONLY the HTML. Start with <div class="mom-report">. No markdown
 
         # 2) On-track topics
         logging.info("[POST-MEETING] Processing on-track topics prompt...")
-        on_track_prompt = f"""
-        You are an experienced Business Analyst assisting in a Post-Meeting Analysis.
-        Your role is to identify **On-Track Topics** — items discussed during the meeting that clearly align with the **agreed scope, deliverables, or requirements** documented in the Discovery Plan and SOW.
-
-        ### INSTRUCTIONS
-        1. Carefully review the meeting transcript and map each relevant discussion to:
-        - The related **sub-module** or section from the SOW (e.g., Recruitment, Payroll, Asset Management, etc.)
-        - The relevant **topic or requirement area** from the Discovery Plan (e.g., Functional Requirement, Data Flow, Integration).
-        2. Include a topic as **On-Track** only if:
-        - It directly supports an existing scope item or sub-module.
-        - It represents progress, validation, or confirmation of in-scope deliverables.
-        - It aligns with agreed business objectives or signed-off user stories.
-        3. For each On-Track item, extract:
-        - `topic`: concise phrase (≤ 20 words) summarizing the discussion point.
-        - `related_submodule`: sub-area from the SOW most related to it.
-        - `related_discovery_topic`: Discovery Plan topic or section most related to it.
-        4. Avoid generic statements, duplicate items, or administrative talk.
-
-        ### OUTPUT FORMAT
-        Return **STRICT JSON ONLY**:
-        {{
-        "items": [
-            {{
-            "topic": "short descriptive phrase",
-            "related_submodule": "SOW sub-module name or 'Not Found'",
-            "related_discovery_topic": "Discovery Plan topic or 'Not Found'"
-            }}
-        ]
-        }}
-
-        ### CONTEXT
-        SOW (Scope of Work): {sow_block}
-        Discovery Plan: {discovery_block}
-        Meeting Transcript: {transcript_block}
-        """
+        on_track_prompt_template = load_prompt("on_track_topics.md")
+        on_track_prompt = on_track_prompt_template.format(
+            sow_block=sow_block,
+            discovery_block=discovery_block,
+            transcript_block=transcript_block
+        )
 
         try:
             on_out = await call_llm_json(on_track_prompt)
@@ -604,83 +622,12 @@ Remember: Output ONLY the HTML. Start with <div class="mom-report">. No markdown
         # -------------------
         logging.info("[POST-MEETING] Processing off-track topics prompt...")
 
-        off_track_prompt = f"""
-        You are a Senior Business Analyst reviewing a meeting transcript against the Discovery Plan and SOW.
-
-        ## TASK
-        Identify **2-3 Off-Track Topics** — discussions, requests, or ideas that appear **outside the defined project scope** or **not covered** in the official requirement documentation.
-        
-        ### IMPORTANT INSTRUCTIONS:
-        1. **MUST INCLUDE 2-3 TOPICS** - Always find and return between 2-3 off-track topics. If you can't find 2-3, look harder as there are always at least 2-3 potential off-track items in any meeting.
-        2. **BE THOROUGH** - Carefully analyze every part of the discussion for potential scope creep or out-of-scope items.
-        3. **BE SPECIFIC** - Each topic should be distinct and represent a separate concern or request.
-
-        ### IDENTIFICATION CRITERIA:
-        A topic is **Off-Track** if it meets ANY of these conditions:
-        - Introduces new features, systems, or functionality not in current plans
-        - Pertains to business areas not covered by the SOW
-        - Expands scope, adds new integrations, or shifts priorities
-        - Implies dependencies requiring formal change requests
-        - Goes beyond current phase goals or high-level definitions
-
-        ### OUTPUT REQUIREMENTS:
-        For EACH of the 2-3 identified topics, provide:
-        1. `topic`: Clear, specific phrase (15-25 words)
-        2. `related_submodule`: Closest SOW section or "Not Found"
-        3. `related_discovery_topic`: Closest Discovery Plan item or "Not Found"
-
-        ### OUTPUT FORMAT (STRICT JSON ONLY):
-        {{
-          "items": [
-            {{
-                "topic": "short descriptive phrase summarizing the off-track point",
-                "related_submodule": "SOW sub-module name or 'Not Found'",
-                "related_discovery_topic": "Discovery Plan topic or 'Not Found'"
-            }}
-          ]
-        }}
-
-        ### EXAMPLES OF OFF-TRACK TOPICS:
-        
-        **Example 1:**
-        ```json
-        {{
-          "topic": "AI to perform prescriptive root cause analysis on win/loss reasons (beyond scoring).",
-          "related_submodule": "Reports & Dashboards",
-          "related_discovery_topic": "Sales Cloud + Einstein (Part 2)"
-        }}
-        ```
-
-        **Example 2:**
-        ```json
-        {{
-          "topic": "AI searching general web/search engines for potential leads or vendors.",
-          "related_submodule": "Opportunity Identification",
-          "related_discovery_topic": "Sales Cloud + Einstein (Part 1)"
-        }}
-        ```
-
-        **Example 3:**
-        ```json
-        {{
-          "topic": "Automated email campaign personalization based on social media activity.",
-          "related_submodule": "Not Found",
-          "related_discovery_topic": "Not Found"
-        }}
-        ```
-
-        ### FINAL OUTPUT REQUIREMENTS:
-        1. **MUST** return EXACTLY 2-3 off-track topics
-        2. **MUST** use the exact JSON structure shown in examples
-        3. **MUST** include all three fields for each topic
-        4. **MUST** return valid JSON that can be parsed
-        ```
-
-        ### CONTEXT
-        SOW (Scope of Work): {sow_block}
-        Discovery Plan: {discovery_block}
-        Meeting Transcript: {transcript_block}
-        """
+        off_track_prompt_template = load_prompt("off_track_topics.md")
+        off_track_prompt = off_track_prompt_template.format(
+            sow_block=sow_block,
+            discovery_block=discovery_block,
+            transcript_block=transcript_block
+        )
 
         try:
             off_out = await call_llm_json(off_track_prompt)
@@ -728,36 +675,12 @@ Remember: Output ONLY the HTML. Start with <div class="mom-report">. No markdown
 
         # 4) Open topics
         logging.info("[POST-MEETING] Processing open topics prompt...")
-        open_prompt = f"""
-        You are acting as a Business Analyst capturing **Open-Ended Topics** from a client meeting.
-
-        These represent **questions, dependencies, or unclear items** that require **follow-up, clarification, or decision-making** after the meeting.
-
-        ### INSTRUCTIONS
-        1. Carefully analyze the transcript for:
-        - Areas where the client or team was uncertain.
-        - Points deferred for future discussion.
-        - Requirements or dependencies that lack clarity or ownership.
-        - Assumptions made without confirmation.
-        2. Convert such items into **crisp, BA-style follow-up questions** or statements.
-        3. Exclude casual or irrelevant queries (e.g., greetings, logistics).
-        4. Prioritize **3–12 most important** follow-ups. Keep each ≤ 20 words.
-        5. Ensure the topics are specific and actionable (avoid generic “to be discussed” phrases).
-
-        ### OUTPUT FORMAT
-        Return **STRICT JSON ONLY**, no markdown or prose:
-        {{
-        "items": [
-            "Question or clarification 1",
-            "Question or clarification 2"
-        ]
-        }}
-
-        ### CONTEXT
-        SOW (Scope of Work): {sow_block}
-        Discovery Plan: {discovery_block}
-        Meeting Transcript: {transcript_block}
-        """
+        open_prompt_template = load_prompt("open_topics.md")
+        open_prompt = open_prompt_template.format(
+            sow_block=sow_block,
+            discovery_block=discovery_block,
+            transcript_block=transcript_block
+        )
         try:
             open_out = await call_llm_json(open_prompt)
             if isinstance(open_out, dict):
@@ -773,40 +696,12 @@ Remember: Output ONLY the HTML. Start with <div class="mom-report">. No markdown
 
         # 5) Provisional user stories
         logging.info("[POST-MEETING] Processing provisional user stories prompt...")
-        stories_prompt = (
-            "You are an expert Business Analyst (BA) AI assistant.\n"
-            "Your task is to extract all *Provisional User Stories* from the meeting transcript below.\n"
-            "These are new or changed requirements that were mentioned in the conversation.\n\n"
-            "### INSTRUCTIONS\n"
-            "- Only include requirements that are explicitly discussed or implied in the transcript.\n"
-            "- Write each user story in clear, concise BA format (e.g., 'The system shall...', 'As a Manager, I want...').\n"
-            "- Each story must have a probable 'module' or feature name, inferred from context (e.g., Payroll, HR, Analytics, Dashboard, Attendance, etc.).\n"
-            "- Each story must include the following fixed fields:\n"
-            "  * text → the full requirement/user story\n"
-            "  * module → relevant functional area or subsystem\n"
-            "  * status → always 'Provisional'\n"
-            "  * scope_status → always 'Pending'\n"
-            "  * scope_justification → short blank string (to be filled by scope analyzer later)\n\n"
-            "### OUTPUT FORMAT\n"
-            "Return STRICT JSON ONLY — no markdown, no prose — in this exact schema:\n"
-            "{\n"
-            "  \"stories\": [\n"
-            "    {\n"
-            "      \"text\": \"The system shall ...\",\n"
-            "      \"module\": \"Payroll Management\",\n"
-            "      \"status\": \"Provisional\",\n"
-            "      \"scope_status\": \"Pending\",\n"
-            "      \"scope_justification\": \"\"\n"
-            "    }\n"
-            "  ]\n"
-            "}\n\n"
-            "If there are no new or updated requirements, return:\n"
-            "{\"stories\": []}\n\n"
-            "### CONTEXT\n"
-            f"SOW (Scope of Work): {sow_block}\n"
-            f"Discovery Plan: {discovery_block}\n"
-            f"Speaker Tags: {speaker_tags_block}\n"
-            f"Transcript: {transcript_block}\n"
+        stories_prompt_template = load_prompt("provisional_stories.md")
+        stories_prompt = stories_prompt_template.format(
+            sow_block=sow_block,
+            discovery_block=discovery_block,
+            speaker_tags_block=speaker_tags_block,
+            transcript_block=transcript_block
         )
         try:
             stories_out = await call_llm_json(stories_prompt)
@@ -887,7 +782,7 @@ Remember: Output ONLY the HTML. Start with <div class="mom-report">. No markdown
             "<div class='mom-report' style='padding:16px;'>"
             "<h3 style='color:#ef4444;'>⚠️ Minutes of Meeting Unavailable</h3>"
             "<p>The AI backend was unable to generate a meeting summary.</p>"
-            "<ul><li>Please ensure <strong>GOOGLE_API_KEY</strong> is configured correctly.</li>"
+            "<ul><li>Please ensure <strong>DEEPSEEK_API_KEY</strong> is configured correctly.</li>"
             "<li>Verify the LLM model name in your <code>.env</code> file and retry.</li></ul>"
             "</div>"
         )

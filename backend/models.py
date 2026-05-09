@@ -1,8 +1,11 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 
-# Database location
-DATABASE_URL = "sqlite:///./data/projects.db"
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'data', 'projects.db')}"
+
 
 # Base class for models
 Base = declarative_base()
@@ -20,8 +23,9 @@ class Project(Base):
     discovery_plan_json = Column(Text, nullable=True)  # Store plan as JSON string
     pre_meeting_brief = Column(Text, nullable=True)    # Stores the generated intelligence brief
 
-    # Relationship to sessions
+    # Relationships
     sessions = relationship("MeetingSession", back_populates="project", cascade="all, delete-orphan")
+    user_stories = relationship("UserStory", back_populates="project", cascade="all, delete-orphan")
 
 # ------------------------
 # MeetingSession Table
@@ -56,6 +60,24 @@ class Requirement(Base):
 
     # Relationship
     session = relationship("MeetingSession", back_populates="requirements")
+
+# ------------------------
+# UserStory Table
+# ------------------------
+class UserStory(Base):
+    __tablename__ = "user_stories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    brn = Column(String)
+    sub_brn = Column(String)
+    module_name = Column(String)
+    sub_module_name = Column(String)
+    description = Column(Text)
+    acceptance_criteria_json = Column(Text)  # Store criteria as JSON string
+
+    # Relationship
+    project = relationship("Project", back_populates="user_stories")
 
 # ------------------------
 # Database Engine & Session

@@ -16,7 +16,9 @@ export const getProjectDetail = (projectId) =>
   api.get(`/api/v1/projects/${projectId}`).then(r => r.data);
 
 export const createProject = (formData) =>
-  api.post('/api/v1/projects/create', formData).then(r => r.data);
+  api.post('/api/v1/projects/create', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
 
 export const deleteProject = (projectId) =>
   api.delete(`/api/v1/projects/${projectId}`).then(r => r.data);
@@ -69,7 +71,42 @@ export const getStoryProjects = () =>
   api.get('/api/v1/stories/projects').then(r => r.data);
 
 export const generateStories = (projectId) =>
-  api.post(`/api/v1/stories/generate-stories/${projectId}`).then(r => r.data);
+  api.post(`/api/v1/stories/generate-stories/${projectId}`, null, {
+    timeout: 0,  // No timeout — multi-agent loop can take 15-30 min for large projects
+  }).then(r => r.data);
+
+export const generateStoriesStream = (projectId, onUpdate, onComplete, onError) => {
+  const url = `${BASE_URL}/api/v1/stories/generate-stories-stream/${projectId}`;
+  const eventSource = new EventSource(url);
+
+  eventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.status === 'complete') {
+        eventSource.close();
+        onComplete(data.stories);
+      } else if (data.status === 'error') {
+        eventSource.close();
+        onError(data.message);
+      } else {
+        onUpdate(data);
+      }
+    } catch (err) {
+      console.error('Error parsing SSE data:', err);
+    }
+  };
+
+  eventSource.onerror = (err) => {
+    console.error('EventSource error:', err);
+    eventSource.close();
+    onError('Connection to server lost. Please try again.');
+  };
+
+  return () => eventSource.close(); // Return cleanup function
+};
+
+export const getExistingStories = (projectId) =>
+  api.get(`/api/v1/stories/project/${projectId}`).then(r => r.data);
 
 // =====================
 // Health check

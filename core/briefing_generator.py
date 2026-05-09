@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from typing import List, Dict, Any, Optional
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 import docx
 import pypdf
 import pandas as pd
@@ -18,6 +18,11 @@ load_dotenv()
 
 # Configure basic logging once
 logging.basicConfig(level=logging.INFO)
+
+def load_prompt(filename: str) -> str:
+    path = os.path.join(os.path.dirname(__file__), "..", "sub_agents", filename)
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
 
 # --- Helper Function to Extract Text from Files ---
 def extract_text_from_file(file_content: bytes, file_name: str) -> str:
@@ -78,26 +83,38 @@ async def generate_intelligence_brief(
     except Exception:
         max_input_chars = 180000
 
-    # 1) Initialize LLM if API key available
-    api_key = os.getenv("GOOGLE_API_KEY")
+    # 1) Initialize LLMs if API key available
+    api_key = os.getenv("DEEPSEEK_API_KEY")
     llm = None
+    llm_flash = None
     logging.info("[CORE] Starting brief generation for client='%s' industry='%s'", client_name, industry)
     if api_key:
-        # Select stable default model; allow override via env LLM_MODEL
-        model_name = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+        # Pro model for complex analysis (overview, scope, risks)
+        model_name = os.getenv("LLM_MODEL_PRO", "deepseek-v4-pro")
+        # Flash model for fast batch tasks (submodule enumeration, discovery questions)
+        flash_model_name = os.getenv("LLM_MODEL_FLASH", "deepseek-v4-flash")
         try:
-            llm = ChatGoogleGenerativeAI(
+            llm = ChatOpenAI(
                 model=model_name,
-                google_api_key=api_key,
+                api_key=api_key,
+                base_url="https://api.deepseek.com",
                 temperature=0.7,
-                max_output_tokens=max_output_tokens,
+                max_tokens=max_output_tokens,
             )
-            logging.info("[CORE] LLM initialized | model='%s'", model_name)
+            llm_flash = ChatOpenAI(
+                model=flash_model_name,
+                api_key=api_key,
+                base_url="https://api.deepseek.com",
+                temperature=0.3,
+                max_tokens=max_output_tokens,
+            )
+            logging.info("[CORE] LLMs initialized | pro='%s' flash='%s'", model_name, flash_model_name)
         except Exception as init_err:
             logging.error("[CORE] Failed to initialize LLM: %s", init_err)
             llm = None
+            llm_flash = None
     else:
-        logging.warning("[CORE] GOOGLE_API_KEY not found; using fallback brief.")
+        logging.warning("[CORE] DEEPSEEK_API_KEY not found; using fallback brief.")
 
     # 2) Extract text/JSON from all documents
     presales_text = extract_text_from_file(presales_doc_content, presales_doc_name)
@@ -123,30 +140,15 @@ async def generate_intelligence_brief(
     presales_text = _trim(presales_text, per_section_budget, "Presales Document")
     additional_docs_text = _trim(additional_docs_text, per_section_budget, "Additional Documents")
 
-    # 4) Build prompt for sections 1-4 only (discovery generated separately)
-    prompt = f"""
-    You are a senior Business Analyst assistant. Create a concise, actionable pre-meeting intelligence brief.
-
-    Inputs:
-    - Client Name: {client_name}
-    - Industry: {industry}
-    - BA Focus: {ba_input}
-    - Presales Document ({presales_doc_name}):
-    {presales_text}
-    - Additional Documents:
-    {additional_docs_text}
-
-    Output strictly these sections and nothing else:
-    1. Executive Summary
-    2. Company & Industry Analysis
-    3. Project Scope & Key Objectives (from documents)
-    4. Potential Risks & Ambiguities
-
-    Rules:
-    - Do NOT include any discovery questions or any heading for discovery questions.
-    - Do NOT add any additional sections or trailing notes.
-    - Keep content concise and professional.
-    """
+    prompt_template = load_prompt("brief_overview.md")
+    prompt = prompt_template.format(
+        client_name=client_name,
+        industry=industry,
+        ba_input=ba_input,
+        presales_doc_name=presales_doc_name,
+        presales_text=presales_text,
+        additional_docs_text=additional_docs_text
+    )
 
     # 5) Generate with LLM or return deterministic fallback
     if llm is not None:
@@ -154,18 +156,21 @@ async def generate_intelligence_brief(
             # Optional batched discovery generation to prevent truncation for many sub-modules
             batched_mode = os.getenv("ENABLE_BATCHED_DISCOVERY", "1") != "0"
 
-            async def call_llm(text: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+            async def call_llm(text: str, metadata: Optional[Dict[str, Any]] = None, use_flash: bool = False) -> str:
+                """Call LLM. use_flash=True uses the fast Flash model for batch/extraction tasks."""
+                target_llm = llm_flash if (use_flash and llm_flash) else llm
+                target_model = flash_model_name if (use_flash and llm_flash) else model_name
                 # Log the prompt being sent to the LLM
                 metadata = metadata or {}
                 metadata.update({
                     'client': client_name,
                     'industry': industry,
-                    'model': model_name,
+                    'model': target_model,
                     'timestamp': pd.Timestamp.utcnow().isoformat()
                 })
                 
                 # Call the LLM
-                ai_message_local = await llm.ainvoke(text)
+                ai_message_local = await target_llm.ainvoke(text)
                 response_content = getattr(ai_message_local, "content", "") or ""
                 
                 # Log the response
@@ -191,59 +196,31 @@ async def generate_intelligence_brief(
                     'client': client_name,
                     'industry': industry
                 }
-                overview_prompt = f"""
-                You are a senior Business Analyst assistant. Create ONLY sections 1 to 4 of the pre-meeting intelligence brief.
-
-                Inputs:
-                - Client Name: {client_name}
-                - Industry: {industry}
-                - BA Focus: {ba_input}
-                - Presales Document ({presales_doc_name}):
-                {presales_text}
-                - Additional Documents:
-                {additional_docs_text}
-
-                Output strictly these sections and nothing else. FORMATTING RULES:
-                - Each section must start on its own line with exactly two newlines before it
-                - Section headings must be at the start of a line with no leading spaces
-                - Section headings must be in bold and end with a colon
-                - Section content must start on a new line after the heading
-                - Do not include any additional text before, between, or after the sections
-
-                **1. Executive Summary:**
-                [Brief overview of the client, project, and key points]
-
-                **2. Company & Industry Analysis:**
-                [Analysis of the client's business and industry context]
-
-                **3. Project Scope & Key Objectives:**
-                [Detailed scope and objectives from the provided documents]
-
-                **4. Potential Risks & Ambiguities:**
-                [Key risks and uncertainties identified]
-                """
+                overview_prompt_template = load_prompt("brief_overview.md")
+                overview_prompt = overview_prompt_template.format(
+                    client_name=client_name,
+                    industry=industry,
+                    ba_input=ba_input,
+                    presales_doc_name=presales_doc_name,
+                    presales_text=presales_text,
+                    additional_docs_text=additional_docs_text
+                )
                 # First, get the overview content
                 overview = await call_llm(overview_prompt, metadata=metadata)
                 
-                # Then create a prompt to enumerate submodules
-                enumerate_prompt = f"""
-                You are extracting structure from documents. From the following materials, list ALL distinct business sub-modules referenced in pre-sales scope.
-                Exclude generic technology/data terms (e.g., JSON, CSV, XML, list, array, object, string, number), placeholders, or punctuation-only tokens.
-                Return ONLY a JSON array of strings with sub-module names, no commentary.
-
-                Client: {client_name}
-                Industry: {industry}
-                BA Focus: {ba_input}
-                Presales Document ({presales_doc_name}):
-                {presales_text}
-
-                Additional Documents:
-                {additional_docs_text}
-                """
-                # Get submodules with metadata
+                enumerate_prompt_template = load_prompt("submodule_enumeration.md")
+                enumerate_prompt = enumerate_prompt_template.format(
+                    client_name=client_name,
+                    industry=industry,
+                    ba_input=ba_input,
+                    presales_doc_name=presales_doc_name,
+                    presales_text=presales_text,
+                    additional_docs_text=additional_docs_text
+                )
+                # Get submodules with metadata — use Flash for fast extraction
                 submodules_metadata = metadata.copy()
                 submodules_metadata['stage'] = 'submodule_enumeration'
-                submodules_json_text = await call_llm(enumerate_prompt, metadata=submodules_metadata)
+                submodules_json_text = await call_llm(enumerate_prompt, metadata=submodules_metadata, use_flash=True)
                 submodules: List[str] = []
                 try:
                     submodules = json.loads(submodules_json_text)
@@ -333,15 +310,9 @@ async def generate_intelligence_brief(
                         'submodule_name': name,
                         'total_submodules': total
                     })
-                    table_prompt = f"""
-                    For the sub-module below, output ONLY a two-column markdown table with headers 'S.No.' and 'Discovery Question'.
-                    - Include exactly 4 rows of insightful, open-ended discovery questions focused on process, data, edge cases, and business impact.
-                    - Do NOT include any heading, numbering, bullets, quotes/backticks, or extra prose before or after the table.
-                    - Do NOT wrap the output in code fences (```). Start the table at column 0.
-
-                    Sub-module: {name}
-                    """
-                    table_md = await call_llm(table_prompt, metadata=submodule_metadata)
+                    table_prompt_template = load_prompt("discovery_questions.md")
+                    table_prompt = table_prompt_template.format(name=name)
+                    table_md = await call_llm(table_prompt, metadata=submodule_metadata, use_flash=True)
                     heading = f"**({idx}) {name}**"
                     discovery_parts.append(f"{heading}\n\n{table_md.strip()}" )
 
@@ -358,6 +329,6 @@ async def generate_intelligence_brief(
 
     # If llm is None, it means the API key was missing or initialization failed
     if api_key:
-        return "AI Initialization Failed: Check your GOOGLE_API_KEY and model settings in the .env file."
+        return "AI Initialization Failed: Check your DEEPSEEK_API_KEY and model settings in the .env file."
     else:
-        return "GOOGLE_API_KEY missing: Please add your Gemini API key to the .env file in the root directory."
+        return "DEEPSEEK_API_KEY missing: Please add your DeepSeek API key to the .env file in the root directory."

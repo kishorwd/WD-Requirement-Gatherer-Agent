@@ -36,7 +36,7 @@ export default function Sidebar() {
       setOnline(ok);
     };
     check();
-    const interval = setInterval(check, 15000);
+    const interval = setInterval(check, 60000);
     return () => clearInterval(interval);
   }, []);
 
