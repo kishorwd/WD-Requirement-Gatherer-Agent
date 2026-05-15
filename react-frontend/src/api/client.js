@@ -26,9 +26,10 @@ export const deleteProject = (projectId) =>
 // =====================
 // Pre-Meeting Intelligence
 // =====================
-export const generateBrief = (formData) =>
+export const generateBrief = (formData, signal) =>
   api.post('/api/v1/generate-brief', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    signal,
   }).then(r => r.data);
 
 // =====================
@@ -49,6 +50,73 @@ export const analyzeTranscript = (formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   }).then(r => r.data);
 
+/**
+ * Streaming transcript analysis via fetch() + ReadableStream.
+ * (EventSource doesn't support POST/file uploads, so we use fetch.)
+ *
+ * @param {FormData} formData  - same shape as analyzeTranscript
+ * @param {Function} onEvent   - called with each progress event {status, message, step}
+ * @param {Function} onComplete - called with the final {status:'complete', session_id, analysis_result, ...}
+ * @param {Function} onError   - called with an error string
+ * @returns {Function} cleanup — call to abort the stream
+ */
+export const analyzeTranscriptStream = (formData, onEvent, onComplete, onError) => {
+  const controller = new AbortController();
+
+  (async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1/meetings/analyze-transcript-stream`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        let msg = `HTTP ${response.status}`;
+        try { const body = await response.json(); msg = body.detail || msg; } catch {}
+        onError(msg);
+        return;
+      }
+
+      const reader  = response.body.getReader();
+      const decoder = new TextDecoder();
+      let   buffer  = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';          // keep partial line for next chunk
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            if (data.status === 'complete') {
+              onComplete(data);
+            } else if (data.status === 'error') {
+              onError(data.message || 'Analysis failed');
+              return;
+            } else {
+              onEvent(data);
+            }
+          } catch (e) {
+            console.error('[SSE parse error]', e, '| line:', trimmed);
+          }
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        onError(err.message || 'Stream connection failed');
+      }
+    }
+  })();
+
+  return () => controller.abort();
+};
+
 export const getProjectSessions = (projectId) =>
   api.get('/api/v1/meetings/sessions', { params: { project_id: projectId } }).then(r => r.data);
 
@@ -58,8 +126,8 @@ export const getSessionRequirements = (sessionId) =>
 // =====================
 // Scope Gap Analysis
 // =====================
-export const analyzeScope = (projectId) =>
-  api.post(`/api/v1/scopes/projects/${projectId}/analyze-scope`).then(r => r.data);
+export const analyzeScope = (projectId, signal) =>
+  api.post(`/api/v1/scopes/projects/${projectId}/analyze-scope`, null, { signal }).then(r => r.data);
 
 export const getProjectRequirements = (projectId, filters = {}) =>
   api.get(`/api/v1/scopes/projects/${projectId}/requirements`, { params: filters }).then(r => r.data);
@@ -70,9 +138,10 @@ export const getProjectRequirements = (projectId, filters = {}) =>
 export const getStoryProjects = () =>
   api.get('/api/v1/stories/projects').then(r => r.data);
 
-export const generateStories = (projectId) =>
+export const generateStories = (projectId, signal) =>
   api.post(`/api/v1/stories/generate-stories/${projectId}`, null, {
     timeout: 0,  // No timeout — multi-agent loop can take 15-30 min for large projects
+    signal,
   }).then(r => r.data);
 
 export const generateStoriesStream = (projectId, onUpdate, onComplete, onError) => {
@@ -107,6 +176,15 @@ export const generateStoriesStream = (projectId, onUpdate, onComplete, onError) 
 
 export const getExistingStories = (projectId) =>
   api.get(`/api/v1/stories/project/${projectId}`).then(r => r.data);
+
+export const getClarifications = (projectId) =>
+  api.get(`/api/v1/stories/project/${projectId}/clarifications`).then(r => r.data);
+
+export const submitClarificationAnswers = (projectId, answers, signal) =>
+  api.post(`/api/v1/stories/project/${projectId}/clarifications/answer`, { answers }, {
+    timeout: 0,  // regeneration can take several minutes
+    signal,
+  }).then(r => r.data);
 
 // =====================
 // Health check

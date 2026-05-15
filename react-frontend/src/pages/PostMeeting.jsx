@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import FileDropzone from '../components/FileDropzone';
 import LoadingOverlay from '../components/LoadingOverlay';
 import MarkdownViewer from '../components/MarkdownViewer';
 import {
   uploadDiscoveryPlan,
   extractSpeakers,
-  analyzeTranscript,
+  analyzeTranscriptStream,
   getProjectSessions,
 } from '../api/client';
 import { useProject } from '../context/ProjectContext';
@@ -30,10 +30,14 @@ export default function PostMeeting() {
   const [speakerTags, setSpeakerTags] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
+  const [liveMessage, setLiveMessage] = useState('');
+  const [liveStep, setLiveStep] = useState(0);
+  const streamCleanupRef = useRef(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [sessions, setSessions] = useState([]);
+  const [viewingSessionId, setViewingSessionId] = useState(null);
   const [uploadingPlan, setUploadingPlan] = useState(false);
   const [extractingSpeakers, setExtractingSpeakers] = useState(false);
 
@@ -58,7 +62,10 @@ export default function PostMeeting() {
               if (latest.analysis_json) {
                 setResult(latest.analysis_json);
                 setActiveTab(0);
+                setViewingSessionId(latest.id);
               }
+            } else {
+              setViewingSessionId(null);
             }
           })
           .catch(() => {});
@@ -68,6 +75,7 @@ export default function PostMeeting() {
       setDiscoveryUploaded(false);
       setResult(null);
       setSessions([]);
+      setViewingSessionId(null);
       setSpeakers([]);
       setSpeakerTags({});
       setTranscriptFile(null);
@@ -76,6 +84,11 @@ export default function PostMeeting() {
     }
     setError('');
   }, [selectedProjectId, projectDetail]);
+
+  // Abort any in-flight stream on unmount
+  useEffect(() => {
+    return () => { if (streamCleanupRef.current) streamCleanupRef.current(); };
+  }, []);
 
   // Auto-extract speakers when transcript changes
   useEffect(() => {
@@ -125,39 +138,67 @@ export default function PostMeeting() {
     });
   };
 
-  const handleAnalyze = async () => {
+  const handleCancelAnalysis = () => {
+    if (streamCleanupRef.current) {
+      streamCleanupRef.current();
+      streamCleanupRef.current = null;
+    }
+    setLoading(false);
+    setLiveMessage('');
+    setLiveStep(0);
+    setError('Processing was stopped. No data was saved.');
+  };
+
+  const handleAnalyze = () => {
     if (!selectedProjectId || !transcriptFile || !discoveryUploaded) return;
     setError('');
     setLoading(true);
-    setLoadingMsg('Uploading transcript...');
-    try {
-      const fd = new FormData();
-      fd.append('project_id', selectedProjectId);
-      fd.append('session_number', sessionNumber);
-      fd.append('speaker_tags_json', JSON.stringify(speakerTags));
-      fd.append('transcript_file', transcriptFile);
+    setLiveMessage('🔧 Preparing analysis context…');
+    setLiveStep(0);
 
-      setLoadingMsg('Running AI analysis...');
-      const data = await analyzeTranscript(fd);
-      setResult(data.analysis_result);
-      setActiveTab(0);
+    const fd = new FormData();
+    fd.append('project_id', selectedProjectId);
+    fd.append('session_number', sessionNumber);
+    fd.append('speaker_tags_json', JSON.stringify(speakerTags));
+    fd.append('transcript_file', transcriptFile);
 
-      // Fetch sessions for history tab
-      const sess = await getProjectSessions(selectedProjectId);
-      setSessions(sess);
-      // Refresh project detail for pipeline update
-      refreshProjectDetail();
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Analysis failed. Please try again.');
-    } finally {
-      setLoading(false);
-      setLoadingMsg('');
-    }
+    const cleanup = analyzeTranscriptStream(
+      fd,
+      // onEvent — live progress
+      (event) => {
+        setLiveMessage(event.message || '');
+        if (typeof event.step === 'number') setLiveStep(event.step);
+      },
+      // onComplete
+      async (data) => {
+        if (streamCleanupRef.current) { streamCleanupRef.current = null; }
+        setResult(data.analysis_result);
+        setActiveTab(0);
+        setLiveMessage('✅ Analysis complete!');
+        setLiveStep(8);
+        try {
+          const sess = await getProjectSessions(selectedProjectId);
+          setSessions(sess);
+          if (sess.length > 0) setViewingSessionId(sess[sess.length - 1].id);
+        } catch {}
+        refreshProjectDetail();
+        setLoading(false);
+      },
+      // onError
+      (errMsg) => {
+        if (streamCleanupRef.current) { streamCleanupRef.current = null; }
+        setError(errMsg || 'Analysis failed. Please try again.');
+        setLoading(false);
+      },
+    );
+
+    streamCleanupRef.current = cleanup;
   };
 
   const canAnalyze = selectedProjectId && discoveryUploaded && transcriptFile;
 
-  const TABS = ['📋 Meeting Summary', '💬 Conversation', '📝 Requirements', '📜 History'];
+  const conflictCount = result?.conflicting_topics?.length || 0;
+  const TABS = ['📋 Meeting Summary', '💬 Conversation', '📝 Requirements', '📜 History', '⚡ Conflicting'];
 
   // No project selected prompt
   if (!selectedProjectId) {
@@ -182,15 +223,19 @@ export default function PostMeeting() {
       {loading && (
         <LoadingOverlay
           title="Analyzing Transcript"
-          message={loadingMsg}
+          message={liveMessage}
           steps={[
-            'Uploading transcript file...',
-            'Extracting speaker dialogue...',
-            'Running AI analysis...',
-            'Checking scope alignment...',
-            'Building dashboard...',
+            'Preparing context…',
+            'Drafting Minutes of Meeting (Actor-Critic)…',
+            'Extracting on-track topics…',
+            'Extracting off-track topics…',
+            'Extracting open-ended topics…',
+            'Extracting provisional requirements…',
+            'Detecting cross-meeting conflicts…',
+            'Analyzing scope alignment…',
           ]}
-          currentStep={loadingMsg.includes('AI') ? 2 : 0}
+          currentStep={liveStep}
+          onCancel={handleCancelAnalysis}
         />
       )}
 
@@ -202,10 +247,40 @@ export default function PostMeeting() {
         </div>
 
         {/* Active project indicator */}
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="badge badge-info">📁 {projectDetail?.client_name || '...'}</span>
           {sessions.length > 0 && (
-            <span className="badge badge-purple" style={{ marginLeft: '8px' }}>{sessions.length} session{sessions.length !== 1 ? 's' : ''}</span>
+            <select
+              className="form-select"
+              style={{ 
+                width: 'auto', 
+                display: 'inline-block', 
+                padding: '4px 32px 4px 12px', 
+                fontSize: '0.85rem', 
+                backgroundColor: 'rgba(139,92,246,0.1)', 
+                color: 'var(--accent-secondary)', 
+                border: '1px solid rgba(139,92,246,0.3)', 
+                borderRadius: '12px', 
+                cursor: 'pointer', 
+                fontWeight: 600 
+              }}
+              value={viewingSessionId || ''}
+              onChange={(e) => {
+                const sessId = parseInt(e.target.value);
+                setViewingSessionId(sessId);
+                const selectedSess = sessions.find(s => s.id === sessId);
+                if (selectedSess && selectedSess.analysis_json) {
+                  setResult(selectedSess.analysis_json);
+                  setActiveTab(0);
+                }
+              }}
+            >
+              {sessions.map((s) => (
+                <option key={s.id} value={s.id} style={{ color: 'var(--text-primary)', backgroundColor: 'var(--bg-secondary)' }}>
+                  Session {s.session_number}
+                </option>
+              ))}
+            </select>
           )}
         </div>
 
@@ -348,6 +423,9 @@ export default function PostMeeting() {
                       onClick={() => setActiveTab(i)}
                     >
                       {tab}
+                      {i === 4 && conflictCount > 0 && (
+                        <span className="tab-count-badge">{conflictCount}</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -468,7 +546,12 @@ export default function PostMeeting() {
                                 <tr key={i}>
                                   <td className="text-xs text-muted">{i + 1}</td>
                                   <td>
-                                    <div className="text-primary" style={{ fontSize: '0.875rem', lineHeight: '1.5' }}>{req.text}</div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                      <div className="text-primary" style={{ fontSize: '0.875rem', lineHeight: '1.5' }}>{req.text}</div>
+                                      {req.is_tentative && (
+                                        <span className="tentative-tag">tentative</span>
+                                      )}
+                                    </div>
                                     {req.scope_justification && (
                                       <div className="text-xs text-muted" style={{ marginTop: '4px' }}>{req.scope_justification}</div>
                                     )}
@@ -517,6 +600,50 @@ export default function PostMeeting() {
                       </div>
                     ) : (
                       <p className="text-sm text-muted">No previous sessions found for this project.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab 4: Conflicting Discussions */}
+                {activeTab === 4 && (
+                  <div className="card fade-in">
+                    <div className="card-title"><span className="card-icon">⚡</span> Conflicting Discussions</div>
+                    <p className="text-sm text-muted" style={{ marginBottom: '16px' }}>
+                      These requirements contradict statements from prior sessions. Review both sides and update the relevant requirements during your normal MoM review.
+                    </p>
+                    {result?.conflicting_topics?.length ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {result.conflicting_topics.map((conflict, i) => (
+                          <div key={i} className="conflict-item">
+                            <div className="conflict-topic">
+                              <span className="badge badge-warning" style={{ marginRight: '8px' }}>⚡ Conflict</span>
+                              <strong style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>{conflict.topic}</strong>
+                              {conflict.module && (
+                                <span className="badge badge-purple" style={{ marginLeft: '8px' }}>{conflict.module}</span>
+                              )}
+                            </div>
+                            <div className="conflict-sides">
+                              <div className="conflict-side conflict-side--prior">
+                                <div className="conflict-side-label">{conflict.prior_meeting || 'Prior session'}</div>
+                                <div className="conflict-side-text">"{conflict.prior_statement}"</div>
+                              </div>
+                              <div className="conflict-arrow">→</div>
+                              <div className="conflict-side conflict-side--current">
+                                <div className="conflict-side-label">{conflict.current_meeting || 'Current session'} (latest)</div>
+                                <div className="conflict-side-text">"{conflict.current_statement}"</div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 0' }}>
+                        <div style={{ fontSize: '2.5rem' }}>✅</div>
+                        <p className="text-sm text-muted">No contradictions detected between this session and prior sessions.</p>
+                        {sessions.length <= 1 && (
+                          <p className="text-xs text-muted">(Conflict detection requires at least two sessions.)</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

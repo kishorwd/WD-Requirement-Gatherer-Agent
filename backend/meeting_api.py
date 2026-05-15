@@ -1,14 +1,22 @@
 import json
+import logging
 from typing import Generator
 
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-# Removed: serialize_project helper function
 from backend.models import SessionLocal, Project, MeetingSession, Requirement
-from core.post_meeting_analyzer import analyze_transcript_text, extract_speakers_llm, read_transcript_bytes
+from core.post_meeting_analyzer import (
+    analyze_transcript_text,
+    analyze_transcript_text_stream,
+    extract_speakers_llm,
+    read_transcript_bytes,
+)
 from core.scope_gap_analyzer import analyze_requirement_scope
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -104,12 +112,32 @@ async def analyze_transcript_endpoint(
         except Exception:
             discovery_plan = {}
 
-    # 3. Call the AI analyzer 
+    # 3. Build prior session summaries (all existing sessions for this project, ordered)
+    prior_sessions_db = db.query(MeetingSession).filter(
+        MeetingSession.project_id == project_id
+    ).order_by(MeetingSession.session_number).all()
+
+    prior_sessions_summaries = []
+    for ps in prior_sessions_db:
+        if ps.analysis_json:
+            try:
+                ps_analysis = json.loads(ps.analysis_json)
+                prior_sessions_summaries.append({
+                    "session_number": ps.session_number,
+                    "provisional_user_stories": ps_analysis.get("provisional_user_stories", []),
+                    "on_track_topics": ps_analysis.get("on_track_topics", []),
+                })
+            except Exception:
+                pass
+
+    # 4. Call the AI analyzer
     analysis_result = await analyze_transcript_text(
         transcript_text,
         speaker_tags,
         discovery_plan,
-        project.sow_text or ""
+        project.sow_text or "",
+        prior_sessions=prior_sessions_summaries if prior_sessions_summaries else None,
+        current_session_number=session_number,
     )
 
     # Ensure analysis_result contains mom & lists. Normalize provisional_user_stories format.
@@ -123,7 +151,7 @@ async def analyze_transcript_endpoint(
             normalized_provisional.append({"text": str(item), "module": "General"})
     analysis_result["provisional_user_stories"] = normalized_provisional
 
-    # 4. Save session into DB
+    # 5. Save session into DB
     new_session = MeetingSession(
         project_id=project_id,
         session_number=session_number,
@@ -135,11 +163,12 @@ async def analyze_transcript_endpoint(
     db.commit()
     db.refresh(new_session)
 
-    # 5. For each requirement: run scope analysis, save it, and update response payload
+    # 6. For each requirement: run scope analysis, save it, and update response payload
     requirements_added = 0
     for idx, req_obj in enumerate(analysis_result["provisional_user_stories"]):
         req_text = req_obj.get("text", "")
         req_module = req_obj.get("module", "General")
+        is_tentative = bool(req_obj.get("is_tentative", False))
         scope_result = await analyze_requirement_scope(project.sow_text or "", req_text)
         scope_status = scope_result.get("scope_status", "Needs Clarification")
         justification = scope_result.get("justification", "")
@@ -150,15 +179,17 @@ async def analyze_transcript_endpoint(
             module=req_module,
             status="Provisional",
             scope_status=scope_status,
-            scope_justification=justification
+            scope_justification=justification,
+            is_tentative=is_tentative,
         )
         db.add(new_req)
         requirements_added += 1
 
-        # Reflect scope results back into analysis_result so frontend renders them
+        # Reflect scope + tentative back into analysis_result so frontend renders them
         analysis_result["provisional_user_stories"][idx]["status"] = req_obj.get("status", "Provisional")
         analysis_result["provisional_user_stories"][idx]["scope_status"] = scope_status
         analysis_result["provisional_user_stories"][idx]["scope_justification"] = justification
+        analysis_result["provisional_user_stories"][idx]["is_tentative"] = is_tentative
 
     db.commit()
 
@@ -213,6 +244,187 @@ def get_project_sessions(project_id: int, db: Session = Depends(get_db)):
 def get_session_requirements(session_id: int, db: Session = Depends(get_db)):
     requirements = db.query(Requirement).filter(Requirement.session_id == session_id).all()
     return [serialize_requirement(r) for r in requirements]
+
+
+# ------------------------
+# Endpoint: Streaming Transcript Analysis (SSE via StreamingResponse)
+# ------------------------
+@router.post("/analyze-transcript-stream")
+async def analyze_transcript_stream_endpoint(
+    project_id: int = Form(...),
+    session_number: int = Form(...),
+    speaker_tags_json: str = Form(...),
+    transcript_file: UploadFile = File(...),
+):
+    """
+    Streaming version of analyze_transcript_stream.
+    Returns text/event-stream; each line is a JSON progress or complete event.
+    Frontend consumes with fetch() + ReadableStream (not EventSource — POST with file).
+    """
+    # Read file bytes before streaming starts (can't await inside async generator cleanly)
+    try:
+        transcript_bytes   = await transcript_file.read()
+        transcript_filename = transcript_file.filename
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error reading transcript: {e}")
+
+    try:
+        speaker_tags = json.loads(speaker_tags_json) if speaker_tags_json else {}
+    except Exception:
+        speaker_tags = {}
+
+    async def event_stream():
+        db = SessionLocal()
+        try:
+            transcript_text = read_transcript_bytes(transcript_filename, transcript_bytes)
+
+            project = db.query(Project).filter(Project.id == project_id).first()
+            if not project:
+                yield f"data: {json.dumps({'status': 'error', 'message': 'Project not found'})}\n\n"
+                return
+
+            discovery_plan: dict = {}
+            if project.discovery_plan_json:
+                try:
+                    discovery_plan = json.loads(project.discovery_plan_json)
+                except Exception:
+                    pass
+
+            # Build prior-session summaries (all sessions, for conflict detection)
+            prior_sessions_db = (
+                db.query(MeetingSession)
+                .filter(MeetingSession.project_id == project_id)
+                .order_by(MeetingSession.session_number)
+                .all()
+            )
+            prior_sessions_summaries = []
+            for ps in prior_sessions_db:
+                if ps.analysis_json:
+                    try:
+                        ps_analysis = json.loads(ps.analysis_json)
+                        prior_sessions_summaries.append({
+                            "session_number": ps.session_number,
+                            "provisional_user_stories": ps_analysis.get("provisional_user_stories", []),
+                            "on_track_topics":          ps_analysis.get("on_track_topics", []),
+                        })
+                    except Exception:
+                        pass
+
+            # ── Stream AI analysis stages ──
+            analysis_result = None
+            async for event in analyze_transcript_text_stream(
+                transcript_text,
+                speaker_tags,
+                discovery_plan,
+                project.sow_text or "",
+                prior_sessions=prior_sessions_summaries if prior_sessions_summaries else None,
+                current_session_number=session_number,
+            ):
+                if event["status"] == "complete":
+                    analysis_result = event["analysis_result"]
+                    yield f"data: {json.dumps({'status': 'progress', 'message': '💾 Saving session to database…', 'step': 7})}\n\n"
+                elif event["status"] == "error":
+                    yield f"data: {json.dumps(event)}\n\n"
+                    return
+                else:
+                    yield f"data: {json.dumps(event)}\n\n"
+
+            if not analysis_result:
+                yield f"data: {json.dumps({'status': 'error', 'message': 'Analysis produced no result'})}\n\n"
+                return
+
+            # Normalize provisional stories
+            provisional = analysis_result.get("provisional_user_stories", [])
+            normalized_provisional = []
+            for item in provisional:
+                if isinstance(item, dict):
+                    normalized_provisional.append(item)
+                else:
+                    normalized_provisional.append({
+                        "text": str(item), "module": "General",
+                        "status": "Provisional", "scope_status": "Pending",
+                        "scope_justification": "", "is_tentative": False,
+                    })
+            analysis_result["provisional_user_stories"] = normalized_provisional
+
+            # Stage session in the transaction without committing yet.
+            # db.flush() gets the auto-generated ID but keeps everything inside
+            # one open transaction — if the stream is cancelled before the final
+            # db.commit() below, the transaction rolls back and nothing persists.
+            new_session = MeetingSession(
+                project_id=project_id,
+                session_number=session_number,
+                mom=analysis_result.get("mom", ""),
+                analysis_json=json.dumps(analysis_result),
+                transcript_text=transcript_text,
+            )
+            db.add(new_session)
+            db.flush()
+            db.refresh(new_session)
+
+            # ── Scope analysis with per-requirement progress ──
+            total_reqs = len(normalized_provisional)
+            if total_reqs > 0:
+                plural = "s" if total_reqs != 1 else ""
+                yield f"data: {json.dumps({'status': 'progress', 'message': f'🔬 Starting scope analysis for {total_reqs} requirement{plural}…', 'step': 7})}\n\n"
+
+            # Collect all requirements in memory first — no DB writes until the end
+            staged_requirements = []
+            for idx, req_obj in enumerate(normalized_provisional):
+                req_text     = req_obj.get("text", "")
+                req_module   = req_obj.get("module", "General")
+                is_tentative = bool(req_obj.get("is_tentative", False))
+
+                # Yield progress every req for small sets, every 3 for larger
+                if total_reqs <= 8 or idx % 3 == 0 or idx == total_reqs - 1:
+                    plural = "s" if total_reqs != 1 else ""
+                    msg    = f"🔬 Scope analysis: {idx + 1} of {total_reqs} requirement{plural}…"
+                    yield f"data: {json.dumps({'status': 'progress', 'message': msg, 'step': 7})}\n\n"
+
+                scope_result = await analyze_requirement_scope(project.sow_text or "", req_text)
+                scope_status = scope_result.get("scope_status", "Needs Clarification")
+                justification = scope_result.get("justification", "")
+
+                staged_requirements.append(Requirement(
+                    session_id=new_session.id,
+                    text=req_text,
+                    module=req_module,
+                    status="Provisional",
+                    scope_status=scope_status,
+                    scope_justification=justification,
+                    is_tentative=is_tentative,
+                ))
+
+                # Reflect scope back into result for frontend rendering
+                analysis_result["provisional_user_stories"][idx]["scope_status"]       = scope_status
+                analysis_result["provisional_user_stories"][idx]["scope_justification"] = justification
+                analysis_result["provisional_user_stories"][idx]["status"]              = "Provisional"
+                analysis_result["provisional_user_stories"][idx]["is_tentative"]        = is_tentative
+
+            # All scope results collected — update session JSON and commit everything atomically.
+            # This single commit is the only point where data reaches the database.
+            # Cancelling the stream before this point leaves the DB untouched.
+            new_session.analysis_json = json.dumps(analysis_result)
+            for req in staged_requirements:
+                db.add(req)
+            db.commit()
+
+            requirements_added = len(staged_requirements)
+            plural = "s" if requirements_added != 1 else ""
+            yield f"data: {json.dumps({'status': 'progress', 'message': f'✅ Scope analysis done. {requirements_added} requirement{plural} saved.', 'step': 7})}\n\n"
+            yield f"data: {json.dumps({'status': 'complete', 'session_id': new_session.id, 'requirements_added': requirements_added, 'analysis_result': analysis_result})}\n\n"
+
+        except Exception as e:
+            logger.error("Streaming analysis failed: %s", e, exc_info=True)
+            try:
+                db.rollback()
+            except Exception:
+                pass
+            yield f"data: {json.dumps({'status': 'error', 'message': str(e)})}\n\n"
+        finally:
+            db.close()
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 # ------------------------

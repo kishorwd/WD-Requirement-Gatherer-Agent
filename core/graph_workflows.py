@@ -261,7 +261,8 @@ async def _generate_stories(state: StoryState) -> dict:
                     str(c).strip()
                     for c in story.get("acceptance_criteria", story.get("acceptanceCriteria", []))
                     if str(c).strip()
-                ]
+                ],
+                "assumption": str(story.get("assumption", "")).strip(),
             })
 
         return {

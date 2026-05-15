@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 
 import os
@@ -26,6 +26,7 @@ class Project(Base):
     # Relationships
     sessions = relationship("MeetingSession", back_populates="project", cascade="all, delete-orphan")
     user_stories = relationship("UserStory", back_populates="project", cascade="all, delete-orphan")
+    clarification_questions = relationship("ClarificationQuestion", back_populates="project", cascade="all, delete-orphan")
 
 # ------------------------
 # MeetingSession Table
@@ -57,6 +58,7 @@ class Requirement(Base):
     status = Column(String, default="Provisional")  # Provisional, Confirmed
     scope_status = Column(String, default="Pending")  # In Scope, Out of Scope...
     scope_justification = Column(Text)
+    is_tentative = Column(Boolean, default=False)
 
     # Relationship
     session = relationship("MeetingSession", back_populates="requirements")
@@ -75,9 +77,31 @@ class UserStory(Base):
     sub_module_name = Column(String)
     description = Column(Text)
     acceptance_criteria_json = Column(Text)  # Store criteria as JSON string
+    generation_status = Column(String, default="converged")  # converged | held | manual_required
+    assumption_text = Column(Text, nullable=True)
+    coach_feedback = Column(Text, nullable=True)
 
     # Relationship
     project = relationship("Project", back_populates="user_stories")
+
+# ------------------------
+# Clarification Question Table
+# ------------------------
+class ClarificationQuestion(Base):
+    __tablename__ = "clarification_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    module_name = Column(String)
+    question_text = Column(Text)
+    context_text = Column(Text)
+    affected_brns_json = Column(Text)           # JSON array of BRN strings
+    requirements_context_json = Column(Text)    # original requirements text (for regeneration)
+    answer_text = Column(Text, nullable=True)
+    status = Column(String, default="pending")  # pending | answered | resolved
+
+    project = relationship("Project", back_populates="clarification_questions")
+
 
 # ------------------------
 # Database Engine & Session
@@ -90,6 +114,25 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # ------------------------
 def create_db_and_tables():
     Base.metadata.create_all(bind=engine)
+
+
+def apply_schema_migrations():
+    """Add new columns to existing tables. Safe to run repeatedly — ignores already-existing columns."""
+    from sqlalchemy import text
+    migrations = [
+        "ALTER TABLE requirements ADD COLUMN is_tentative BOOLEAN DEFAULT 0",
+        "ALTER TABLE user_stories ADD COLUMN generation_status VARCHAR DEFAULT 'converged'",
+        "ALTER TABLE user_stories ADD COLUMN assumption_text TEXT",
+        "ALTER TABLE user_stories ADD COLUMN coach_feedback TEXT",
+    ]
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
+
 
 # Database dependency
 def get_db():

@@ -60,8 +60,14 @@ export default function Sidebar() {
     <>
       <aside className="sidebar">
         {/* Logo */}
-        <div className="sidebar-logo">
-          <div className="sidebar-logo-mark">🧠</div>
+        <div className="sidebar-logo" style={{ textAlign: 'center' }}>
+          <img 
+            src="https://framerusercontent.com/images/CErT9MxNy80jjobqBigJsZ3zxI.png?width=1550&height=400"
+            srcSet="https://framerusercontent.com/images/CErT9MxNy80jjobqBigJsZ3zxI.png?scale-down-to=512&width=1550&height=400 512w, https://framerusercontent.com/images/CErT9MxNy80jjobqBigJsZ3zxI.png?scale-down-to=1024&width=1550&height=400 1024w, https://framerusercontent.com/images/CErT9MxNy80jjobqBigJsZ3zxI.png?width=1550&height=400 1550w"
+            sizes="100vw"
+            alt="Logo" 
+            style={{ width: '100%', maxWidth: '200px', height: 'auto', marginBottom: '12px' }}
+          />
           <h2>BA Co-Pilot</h2>
           <p>Requirement Intelligence Platform</p>
         </div>

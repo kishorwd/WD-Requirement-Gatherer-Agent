@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import FileDropzone from '../components/FileDropzone';
 import LoadingOverlay from '../components/LoadingOverlay';
 import MarkdownViewer from '../components/MarkdownViewer';
@@ -25,6 +25,8 @@ export default function PreMeeting() {
   const [currentStep, setCurrentStep] = useState(0);
   const [brief, setBrief] = useState(null);
   const [error, setError] = useState('');
+  const abortControllerRef = useRef(null);
+  const stepTimerRef = useRef(null);
 
   // Restore state from selected project
   useEffect(() => {
@@ -80,23 +82,40 @@ export default function PreMeeting() {
     setCurrentStep(0);
     setBrief(null);
 
+    abortControllerRef.current = new AbortController();
+
     // Simulate step progression
-    const stepTimer = setInterval(() => {
+    stepTimerRef.current = setInterval(() => {
       setCurrentStep((s) => (s < BRIEF_STEPS.length - 1 ? s + 1 : s));
     }, 4000);
 
     try {
-      const result = await generateBrief(fd);
+      const result = await generateBrief(fd, abortControllerRef.current.signal);
       setBrief(result.brief);
       // Refresh project detail so the sidebar pipeline updates
       refreshProjectDetail();
     } catch (err) {
+      if (err.name === 'CanceledError' || err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+        return;
+      }
       setError(err.response?.data?.detail || 'Failed to generate brief. Check that backend is running.');
     } finally {
-      clearInterval(stepTimer);
+      clearInterval(stepTimerRef.current);
+      abortControllerRef.current = null;
       setLoading(false);
       setCurrentStep(0);
     }
+  };
+
+  const handleCancelBrief = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    clearInterval(stepTimerRef.current);
+    setLoading(false);
+    setCurrentStep(0);
+    setError('Processing was stopped.');
   };
 
   const handleDownload = () => {
@@ -139,6 +158,7 @@ export default function PreMeeting() {
           message="This may take 1–3 minutes for large documents..."
           steps={BRIEF_STEPS}
           currentStep={currentStep}
+          onCancel={handleCancelBrief}
         />
       )}
 

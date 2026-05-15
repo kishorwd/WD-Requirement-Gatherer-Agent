@@ -6,6 +6,8 @@ Check each story against these Agile Best Practices:
 3. **Size**: Is the story small enough to be a User Story, or is it too broad (an Epic)?
 4. **Value**: Does the "so that [Benefit]" part clearly articulate business value?
 
+Note: Each story may have an `assumption` field — this is informational metadata for the BA. Do NOT evaluate or penalize the assumption field; it does not affect your review decision.
+
 If ALL stories meet the criteria, output STRICT JSON:
 {{
   "status": "PASS",

@@ -7,7 +7,7 @@ const STEPS_DEFAULT = [
   'Building intelligence brief...',
 ];
 
-export default function LoadingOverlay({ title = 'Processing...', message = '', steps = STEPS_DEFAULT, currentStep = -1 }) {
+export default function LoadingOverlay({ title = 'Processing...', message = '', steps = STEPS_DEFAULT, currentStep = -1, onCancel }) {
   return (
     <div className="loading-overlay">
       <div className="loading-card">
@@ -28,6 +28,11 @@ export default function LoadingOverlay({ title = 'Processing...', message = '', 
               </div>
             ))}
           </div>
+        )}
+        {onCancel && (
+          <button className="loading-cancel-btn" onClick={onCancel}>
+            ✕ Stop Processing
+          </button>
         )}
       </div>
     </div>

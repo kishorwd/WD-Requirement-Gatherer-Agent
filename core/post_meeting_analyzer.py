@@ -304,51 +304,145 @@ async def extract_speakers_llm(transcript: str) -> List[str]:
         return []
 
 # ------------------------
-# Core Analyzer Function
+# Module-level table formatters (also used inside analyze_transcript_text)
 # ------------------------
+
+def format_on_track_topics_table(items: List[Dict[str, str]]) -> str:
+    if not items:
+        return "| Topic | Related Sub-Module | Related Discovery Topic |\n| --- | --- | --- |\n| No on-track topics identified | - | - |"
+    table = ["| Topic | Related Sub-Module | Related Discovery Topic |", "| --- | --- | --- |"]
+    for item in items:
+        topic = item.get("topic", "").replace("|", "\\|")
+        sub   = item.get("related_submodule", "").replace("|", "\\|")
+        disc  = item.get("related_discovery_topic", "").replace("|", "\\|")
+        table.append(f"| {topic} | {sub} | {disc} |")
+    return "\n".join(table)
+
+
+def format_off_track_topics_table(items: List[Dict[str, str]]) -> str:
+    if not items:
+        return (
+            "| Status | Topic | Related to SOW | Related to Discovery |\n"
+            "| --- | --- | --- | --- |\n"
+            "| ✅ | No off-track topics identified | - | - |"
+        )
+    table = [
+        "| Status | Topic | Related to SOW | Related to Discovery |",
+        "| --- | --- | --- | --- |",
+    ]
+    for item in items:
+        topic  = str(item.get("topic", "")).replace("|", "\\|")
+        sub    = str(item.get("related_submodule", "Not in SOW")).replace("|", "\\|")
+        disc   = str(item.get("related_discovery_topic", "Not in Discovery")).replace("|", "\\|")
+        status = "❌" if ("not in" in sub.lower() or "not in" in disc.lower()) else "⚠️"
+        table.append(f"| {status} | {topic} | {sub} | {disc} |")
+    return "\n".join(table)
+
+
+# ------------------------
+# Shared LLM JSON helper (used by both stream and non-stream paths)
+# ------------------------
+
+async def _call_llm_json(llm, prompt_text: str) -> Any:
+    try:
+        msg = await llm.ainvoke(prompt_text)
+        content = getattr(msg, "content", "").strip()
+        if not content:
+            return None
+        try:
+            return json.loads(content)
+        except Exception:
+            pass
+        cleaned = content
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[-1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("\n", 1)[0]
+        cleaned = cleaned.strip()
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            start = cleaned.find("{")
+            end   = cleaned.rfind("}")
+            if start != -1 and end > start:
+                try:
+                    return json.loads(cleaned[start:end + 1])
+                except Exception:
+                    pass
+            return content
+    except Exception as e:
+        logging.error("[LLM-JSON] call failed: %s", e)
+        return None
+
+
+# ------------------------
+# Core Analyzer — Full Streaming Version
+# ------------------------
+
 async def analyze_transcript_text_stream(
     transcript: str,
     speaker_tags: Dict[str, str],
     discovery_plan: Dict[str, Any],
-    sow_text: str
+    sow_text: str,
+    prior_sessions: Optional[List[Dict[str, Any]]] = None,
+    current_session_number: int = 1,
 ):
     """
-    Streaming version of analyze_transcript_text.
-    Yields progress updates for each stage.
+    Fully-streaming transcript analysis.
+
+    Yields {"status": "progress", "message": str, "step": int} for every meaningful
+    AI event, then {"status": "complete", "analysis_result": dict} when done.
+
+    Steps map:
+      0 — setup / context prep
+      1 — Minutes of Meeting (Actor-Critic loop)
+      2 — On-track topics
+      3 — Off-track topics
+      4 — Open topics
+      5 — Provisional requirements
+      6 — Cross-meeting conflict detection
+      (scope analysis and DB save happen in the API layer, step 7)
     """
     llm = init_llm()
     if not llm:
-        yield {"status": "error", "message": "LLM not initialized"}
+        yield {"status": "error", "message": "LLM unavailable — check DEEPSEEK_API_KEY"}
         return
 
-    # Preparation
+    # ── Context prep ──
+    yield {"status": "progress", "message": "🔧 Preparing analysis context…", "step": 0}
+
     transcript_block = transcript
-    discovery_block = json.dumps(discovery_plan, ensure_ascii=False, indent=2)
-    speaker_tags_block = json.dumps(speaker_tags, ensure_ascii=False, indent=2)
-    
-    # SOW formatting
     try:
         if isinstance(sow_text, str) and (sow_text.startswith('{') or sow_text.startswith('[')):
-            sow_json = json.loads(sow_text)
-            sow_block = json.dumps(sow_json, ensure_ascii=False, indent=2)
+            sow_block = json.dumps(json.loads(sow_text), ensure_ascii=False, indent=2)
         else:
             sow_block = json.dumps({"sow_text": sow_text}, ensure_ascii=False, indent=2)
-    except:
+    except Exception:
         sow_block = json.dumps({"sow_text": str(sow_text)}, ensure_ascii=False, indent=2)
 
-    aggregated = {
+    if not isinstance(discovery_plan, (dict, list)):
+        try:
+            discovery_plan = json.loads(str(discovery_plan))
+        except Exception:
+            discovery_plan = {}
+
+    discovery_block    = json.dumps(discovery_plan, ensure_ascii=False, indent=2)
+    speaker_tags_block = json.dumps(speaker_tags,   ensure_ascii=False, indent=2)
+
+    aggregated: Dict[str, Any] = {
         "mom": "",
         "on_track_topics": [],
         "off_track_topics": [],
         "provisional_user_stories": [],
-        "open_topics": []
+        "open_topics": [],
+        "conflicting_topics": [],
     }
 
-    # Stage 1: MoM via LangGraph
-    yield {"status": "progress", "message": "🤖 Starting MoM Agent (Actor-Critic loop)...", "step": 1}
+    # ── 1. Minutes of Meeting — LangGraph Actor-Critic loop ──
+    yield {"status": "progress", "message": "🤖 MoM Agent starting Actor-Critic review loop…", "step": 1}
     try:
         from .graph_workflows import mom_review_graph
-        initial_state = {
+        mom_initial = {
             "transcript": transcript_block,
             "speaker_tags_block": speaker_tags_block,
             "discovery_block": discovery_block,
@@ -358,45 +452,232 @@ async def analyze_transcript_text_stream(
             "review_feedback": "",
             "review_cycle": 0,
         }
-        async for event in mom_review_graph.astream(initial_state, stream_mode="updates"):
+        async for event in mom_review_graph.astream(mom_initial, stream_mode="updates"):
             for node_name, output in event.items():
                 if node_name == "generate":
                     cycle = output.get("review_cycle", 1)
-                    if cycle == 1:
-                        yield {"status": "progress", "message": "✍️ Drafting initial Minutes of Meeting...", "step": 1}
-                    else:
-                        yield {"status": "progress", "message": f"🔄 Reworking MoM based on feedback (Cycle {cycle-1})...", "step": 1}
+                    yield {
+                        "status": "progress",
+                        "message": f"✍️ MoM Agent drafting Minutes of Meeting (Cycle {cycle})…",
+                        "step": 1,
+                    }
                 elif node_name == "review":
-                    status = output.get("review_status")
-                    feedback = output.get("review_feedback")
-                    if status == "REWORK":
-                        yield {"status": "progress", "message": f"🔍 MoM Reviewer requested changes: {feedback[:80]}...", "step": 1}
+                    rv_status   = output.get("review_status", "")
+                    rv_feedback = output.get("review_feedback", "")
+                    if rv_status == "REWORK":
+                        snippet = (rv_feedback[:70] + "…") if len(rv_feedback) > 70 else rv_feedback
+                        yield {
+                            "status": "progress",
+                            "message": f"🔍 MoM Reviewer requested changes — {snippet}",
+                            "step": 1,
+                        }
                     else:
                         yield {"status": "progress", "message": "✅ MoM Reviewer approved the draft!", "step": 1}
-        
-        final_mom_state = await mom_review_graph.ainvoke(initial_state)
-        aggregated["mom"] = sanitize_mom_html(final_mom_state.get("draft_mom", ""))
-    except Exception as e:
-        logger.error(f"MoM stream failed: {e}")
 
-    # Stage 2: Topics
-    yield {"status": "progress", "message": "📈 Extracting On-Track topics...", "step": 2}
-    # ... we could do detailed streaming here too but let's do high-level steps for now
-    
-    # We'll call the original function for the rest but wrap it in progress messages
-    # Or just copy the logic briefly. To keep it simple and consistent:
-    result = await analyze_transcript_text(transcript, speaker_tags, discovery_plan, sow_text)
-    result["mom"] = aggregated["mom"] # preserve the one we streamed
-    
-    yield {"status": "progress", "message": "📉 Identifying Off-Track topics...", "step": 3}
-    yield {"status": "progress", "message": "📝 Extracting Provisional Requirements...", "step": 4}
-    yield {"status": "complete", "analysis_result": result}
+        final_mom = await mom_review_graph.ainvoke(mom_initial)
+        aggregated["mom"] = sanitize_mom_html(final_mom.get("draft_mom", ""))
+        cycles = final_mom.get("review_cycle", 1)
+        yield {
+            "status": "progress",
+            "message": f"📋 Minutes of Meeting finalized ({cycles} review cycle{'s' if cycles > 1 else ''}).",
+            "step": 1,
+        }
+    except Exception as e:
+        logging.error("[STREAM] MoM failed: %s", e)
+        yield {"status": "progress", "message": "⚠️ MoM generation hit an issue — using fallback.", "step": 1}
+        try:
+            fb_prompt = load_prompt("mom_generator.md").format(
+                transcript_block=transcript_block, speaker_tags_block=speaker_tags_block,
+                discovery_block=discovery_block, sow_block=sow_block,
+            )
+            msg = await llm.ainvoke(fb_prompt)
+            aggregated["mom"] = sanitize_mom_html(getattr(msg, "content", ""))
+        except Exception:
+            pass
+
+    # ── 2. On-track topics ──
+    yield {"status": "progress", "message": "📊 Extracting on-track topics (aligned with SOW & discovery plan)…", "step": 2}
+    try:
+        on_prompt = load_prompt("on_track_topics.md").format(
+            sow_block=sow_block, discovery_block=discovery_block, transcript_block=transcript_block
+        )
+        on_out = await _call_llm_json(llm, on_prompt)
+        parsed = []
+        if isinstance(on_out, dict):
+            parsed = on_out.get("items", [])
+        elif isinstance(on_out, str):
+            try:
+                parsed = json.loads(on_out).get("items", [])
+            except Exception:
+                parts  = [p.strip("- •\t ") for p in on_out.replace("\n", ",").split(",")]
+                parsed = [{"topic": p, "related_submodule": "-", "related_discovery_topic": "-"} for p in parts if p]
+        if isinstance(parsed, list):
+            aggregated["on_track_topics"]       = parsed
+            aggregated["on_track_topics_table"] = format_on_track_topics_table(parsed)
+        n = len(aggregated["on_track_topics"])
+        yield {"status": "progress", "message": f"✅ Found {n} on-track topic{'s' if n != 1 else ''}.", "step": 2}
+    except Exception as e:
+        logging.error("[STREAM] On-track topics failed: %s", e)
+        aggregated["on_track_topics"]       = []
+        aggregated["on_track_topics_table"] = format_on_track_topics_table([])
+        yield {"status": "progress", "message": "⚠️ Could not extract on-track topics.", "step": 2}
+
+    # ── 3. Off-track topics ──
+    yield {"status": "progress", "message": "⚠️ Identifying off-track discussions (outside SOW scope)…", "step": 3}
+    try:
+        off_prompt = load_prompt("off_track_topics.md").format(
+            sow_block=sow_block, discovery_block=discovery_block, transcript_block=transcript_block
+        )
+        off_out = await _call_llm_json(llm, off_prompt)
+        parsed  = []
+        if isinstance(off_out, dict):
+            parsed = off_out.get("items", [])
+        elif isinstance(off_out, str):
+            try:
+                parsed = json.loads(off_out).get("items", [])
+            except Exception:
+                parts  = [p.strip("- •\t ") for p in off_out.replace("\n", ",").split(",")]
+                parsed = [{"topic": p, "related_submodule": "-", "related_discovery_topic": "-"} for p in parts if p]
+        if isinstance(parsed, list):
+            valid = [
+                item for item in parsed
+                if isinstance(item, dict) and item.get("topic", "").strip()
+                and any(k in item for k in ["related_submodule", "related_discovery_topic", "impact", "recommendation"])
+            ]
+            aggregated["off_track_topics"]       = valid
+            aggregated["off_track_topics_table"] = format_off_track_topics_table(valid)
+        n = len(aggregated["off_track_topics"])
+        yield {"status": "progress", "message": f"✅ Found {n} off-track discussion{'s' if n != 1 else ''}.", "step": 3}
+    except Exception as e:
+        logging.error("[STREAM] Off-track topics failed: %s", e)
+        aggregated["off_track_topics"]       = []
+        aggregated["off_track_topics_table"] = format_off_track_topics_table([])
+        yield {"status": "progress", "message": "⚠️ Could not extract off-track topics.", "step": 3}
+
+    # ── 4. Open topics ──
+    yield {"status": "progress", "message": "❓ Extracting open-ended questions and unresolved topics…", "step": 4}
+    try:
+        open_prompt = load_prompt("open_topics.md").format(
+            sow_block=sow_block, discovery_block=discovery_block, transcript_block=transcript_block
+        )
+        open_out = await _call_llm_json(llm, open_prompt)
+        if isinstance(open_out, dict):
+            aggregated["open_topics"] = [str(x) for x in open_out.get("items", [])]
+        elif isinstance(open_out, str):
+            parts = [p.strip("- •\t ") for p in open_out.replace("\n", ",").split(",")]
+            aggregated["open_topics"] = [p for p in parts if p]
+        n = len(aggregated["open_topics"])
+        yield {"status": "progress", "message": f"✅ Found {n} open question{'s' if n != 1 else ''}.", "step": 4}
+    except Exception as e:
+        logging.error("[STREAM] Open topics failed: %s", e)
+        aggregated["open_topics"] = []
+        yield {"status": "progress", "message": "⚠️ Could not extract open topics.", "step": 4}
+
+    # ── 5. Provisional requirements ──
+    yield {"status": "progress", "message": "📝 Extracting provisional requirements from transcript…", "step": 5}
+    try:
+        stories_prompt = load_prompt("provisional_stories.md").format(
+            sow_block=sow_block, discovery_block=discovery_block,
+            speaker_tags_block=speaker_tags_block, transcript_block=transcript_block,
+        )
+        stories_out = await _call_llm_json(llm, stories_prompt)
+        normalized: List[Dict[str, Any]] = []
+        items_raw = []
+        if isinstance(stories_out, dict):
+            items_raw = stories_out.get("stories", [])
+        elif isinstance(stories_out, str):
+            try:
+                cleaned = stories_out
+                if cleaned.startswith("```"):
+                    cleaned = cleaned.split("\n", 1)[-1]
+                if cleaned.endswith("```"):
+                    cleaned = cleaned.rsplit("\n", 1)[0]
+                obj = json.loads(cleaned.strip())
+                items_raw = obj.get("stories", []) if isinstance(obj, dict) else obj
+            except Exception:
+                for line in stories_out.splitlines():
+                    val = line.strip("- •\t ")
+                    if val:
+                        items_raw.append(val)
+        for item in items_raw:
+            if isinstance(item, dict):
+                normalized.append({
+                    "text":               str(item.get("text", "")),
+                    "module":             str(item.get("module", "General")),
+                    "status":             "Provisional",
+                    "scope_status":       "Pending",
+                    "scope_justification": "",
+                    "is_tentative":       bool(item.get("is_tentative", False)),
+                })
+            else:
+                normalized.append({"text": str(item), "module": "General", "status": "Provisional",
+                                    "scope_status": "Pending", "scope_justification": "", "is_tentative": False})
+        aggregated["provisional_user_stories"] = normalized
+        n          = len(normalized)
+        n_tent     = sum(1 for r in normalized if r.get("is_tentative"))
+        tent_note  = f" ({n_tent} tentative)" if n_tent else ""
+        yield {"status": "progress", "message": f"✅ Extracted {n} requirement{'s' if n != 1 else ''}{tent_note}.", "step": 5}
+    except Exception as e:
+        logging.error("[STREAM] Provisional stories failed: %s", e)
+        aggregated["provisional_user_stories"] = []
+        yield {"status": "progress", "message": "⚠️ Could not extract requirements.", "step": 5}
+
+    # ── 6. Cross-meeting conflict detection ──
+    if prior_sessions:
+        n_prior = len(prior_sessions)
+        yield {
+            "status": "progress",
+            "message": f"⚡ Checking for contradictions across {n_prior} prior session{'s' if n_prior > 1 else ''}…",
+            "step": 6,
+        }
+        try:
+            sorted_prior = sorted(prior_sessions, key=lambda s: s.get("session_number", 0))
+            prior_blocks = []
+            for ps in sorted_prior:
+                reqs      = ps.get("provisional_user_stories", [])
+                req_texts = [f"  - [{r.get('module', 'General')}] {r.get('text', '')}" for r in reqs[:30]]
+                prior_blocks.append(f"Session {ps.get('session_number', '?')}:\n" + "\n".join(req_texts))
+            prior_sessions_block = "\n\n".join(prior_blocks)
+
+            current_reqs      = aggregated.get("provisional_user_stories", [])
+            current_req_texts = "\n".join(
+                f"- [{r.get('module', 'General')}] {r.get('text', '')}" for r in current_reqs
+            )
+            conflict_prompt = load_prompt("conflicting_topics.md").format(
+                prior_sessions_block=prior_sessions_block,
+                current_requirements_block=current_req_texts,
+                current_session_number=current_session_number,
+            )
+            conflict_out = await _call_llm_json(llm, conflict_prompt)
+            if isinstance(conflict_out, dict):
+                aggregated["conflicting_topics"] = conflict_out.get("items", [])
+            n_c = len(aggregated["conflicting_topics"])
+            if n_c:
+                yield {"status": "progress", "message": f"⚡ Detected {n_c} conflict{'s' if n_c > 1 else ''} with prior sessions.", "step": 6}
+            else:
+                yield {"status": "progress", "message": "✅ No contradictions detected with prior sessions.", "step": 6}
+        except Exception as e:
+            logging.error("[STREAM] Conflict detection failed: %s", e)
+            aggregated["conflicting_topics"] = []
+            yield {"status": "progress", "message": "⚠️ Conflict detection hit an issue.", "step": 6}
+
+    # ── Fallbacks ──
+    if not aggregated["mom"]:
+        aggregated["mom"] = (
+            "<div class='mom-report' style='padding:16px;'>"
+            "<h3 style='color:#ef4444;'>⚠️ Minutes of Meeting Unavailable</h3>"
+            "<p>Check DEEPSEEK_API_KEY and retry.</p></div>"
+        )
+
+    yield {"status": "complete", "analysis_result": aggregated}
 
 async def analyze_transcript_text(
     transcript: str,
     speaker_tags: Dict[str, str],
     discovery_plan: Dict[str, Any],
-    sow_text: str
+    sow_text: str,
+    prior_sessions: Optional[List[Dict[str, Any]]] = None,
+    current_session_number: int = 1,
 ) -> Dict[str, Any]:
     """
     Analyze transcript using five specialized prompts. Aggregates results with robust fallbacks.
@@ -487,11 +768,12 @@ async def analyze_transcript_text(
 
     aggregated: Dict[str, Any] = {
         "mom": "",
-                    "on_track_topics": [],
-                    "off_track_topics": [],
-                    "provisional_user_stories": [],
-                    "open_topics": []
-                }
+        "on_track_topics": [],
+        "off_track_topics": [],
+        "provisional_user_stories": [],
+        "open_topics": [],
+        "conflicting_topics": [],
+    }
 
     if llm:
         logging.info("[POST-MEETING] Starting LLM analysis with 5 specialized prompts...")
@@ -534,23 +816,6 @@ async def analyze_transcript_text(
             except Exception as e2:
                 logging.error(f"[POST-MEETING] MoM fallback also failed: {e2}")
 
-        # ------------------------
-        # Helper: Format On-Track Topics as Markdown Table
-        # ------------------------
-        def format_on_track_topics_table(items: List[Dict[str, str]]) -> str:
-            """Convert structured on-track topic items into a Markdown table."""
-            if not items:
-                return "| Topic | Related Sub-Module | Related Discovery Topic |\n| --- | --- | --- |\n| No on-track topics identified | - | - |"
-            
-            table = ["| Topic | Related Sub-Module | Related Discovery Topic |", "| --- | --- | --- |"]
-            for item in items:
-                topic = item.get("topic", "").replace("|", "\\|")
-                sub = item.get("related_submodule", "").replace("|", "\\|")
-                disc = item.get("related_discovery_topic", "").replace("|", "\\|")
-                table.append(f"| {topic} | {sub} | {disc} |")
-            return "\n".join(table)
-
-
         # 2) On-track topics
         logging.info("[POST-MEETING] Processing on-track topics prompt...")
         on_track_prompt_template = load_prompt("on_track_topics.md")
@@ -585,37 +850,6 @@ async def analyze_transcript_text(
             logging.error(f"[POST-MEETING] On-track topics prompt failed: {e}")
             aggregated["on_track_topics"] = []
             aggregated["on_track_topics_table"] = format_on_track_topics_table([])
-
-        def format_off_track_topics_table(items: List[Dict[str, str]]) -> str:
-            """Convert structured off-track topic items into a detailed Markdown table."""
-            if not items:
-                return (
-                    "| Status | Topic | Related to SOW | Related to Discovery |\n"
-                    "| --- | --- | --- | --- |\n"
-                    "| ✅ | No off-track topics identified | - | - |"
-                )
-
-            table = [
-                "| Status | Topic | Related to SOW | Related to Discovery |",
-                "| --- | --- | --- | --- |"
-            ]
-            
-            for item in items:
-                # Safely get values with defaults
-                topic = str(item.get("topic", "")).replace("|", "\\|")
-                sub = str(item.get("related_submodule", "Not in SOW")).replace("|", "\\|")
-                disc = str(item.get("related_discovery_topic", "Not in Discovery")).replace("|", "\\|")
-                
-                # Determine status emoji
-                status = "⚠️"  # Default warning
-                if "not in" in sub.lower() or "not in" in disc.lower():
-                    status = "❌"  # Critical if not in either document
-                
-                table.append(
-                    f"| {status} | {topic} | {sub} | {disc} |"
-                )
-                
-            return "\n".join(table)
 
         # -------------------
         # 3) Off-track topics
@@ -716,6 +950,7 @@ async def analyze_transcript_text(
                             "status": str(item.get("status", "Provisional")),
                             "scope_status": str(item.get("scope_status", "Pending")),
                             "scope_justification": str(item.get("scope_justification", "")),
+                            "is_tentative": bool(item.get("is_tentative", False)),
                         })
                     else:
                         normalized.append({
@@ -723,7 +958,8 @@ async def analyze_transcript_text(
                             "module": "General",
                             "status": "Provisional",
                             "scope_status": "Pending",
-                            "scope_justification": ""
+                            "scope_justification": "",
+                            "is_tentative": False,
                         })
                 aggregated["provisional_user_stories"] = normalized
             elif isinstance(stories_out, str):
@@ -746,6 +982,7 @@ async def analyze_transcript_text(
                                 "status": str(item.get("status", "Provisional")),
                                 "scope_status": str(item.get("scope_status", "Pending")),
                                 "scope_justification": str(item.get("scope_justification", "")),
+                                "is_tentative": bool(item.get("is_tentative", False)),
                             })
                         else:
                             added.append({
@@ -753,7 +990,8 @@ async def analyze_transcript_text(
                                 "module": "General",
                                 "status": "Provisional",
                                 "scope_status": "Pending",
-                                "scope_justification": ""
+                                "scope_justification": "",
+                                "is_tentative": False,
                             })
                 except Exception:
                     # Fallback: split lines into simple story texts
@@ -774,6 +1012,48 @@ async def analyze_transcript_text(
         except Exception as e:
             logging.error(f"[POST-MEETING] Provisional stories prompt failed: {e}")
             aggregated["provisional_user_stories"] = []
+
+        # 6) Conflicting topics — only when prior sessions exist
+        if prior_sessions:
+            logging.info("[POST-MEETING] Detecting cross-meeting conflicts (%d prior sessions)...", len(prior_sessions))
+            try:
+                # Build prior sessions summary (all sessions, oldest first)
+                sorted_prior = sorted(prior_sessions, key=lambda s: s.get("session_number", 0))
+                prior_blocks = []
+                for ps in sorted_prior:
+                    reqs = ps.get("provisional_user_stories", [])
+                    req_texts = [
+                        f"  - [{r.get('module', 'General')}] {r.get('text', '')}"
+                        for r in reqs[:30]  # cap per-session to keep token cost manageable
+                    ]
+                    prior_blocks.append(
+                        f"Session {ps.get('session_number', '?')}:\n" + "\n".join(req_texts)
+                    )
+                prior_sessions_block = "\n\n".join(prior_blocks)
+
+                current_reqs = aggregated.get("provisional_user_stories", [])
+                current_req_texts = "\n".join(
+                    f"- [{r.get('module', 'General')}] {r.get('text', '')}"
+                    for r in current_reqs
+                )
+
+                conflict_prompt_template = load_prompt("conflicting_topics.md")
+                conflict_prompt = conflict_prompt_template.format(
+                    prior_sessions_block=prior_sessions_block,
+                    current_requirements_block=current_req_texts,
+                    current_session_number=current_session_number,
+                )
+
+                conflict_out = await call_llm_json(conflict_prompt)
+                if isinstance(conflict_out, dict):
+                    aggregated["conflicting_topics"] = conflict_out.get("items", [])
+                logging.info(
+                    "[POST-MEETING] Conflicting topics: %d items",
+                    len(aggregated["conflicting_topics"]),
+                )
+            except Exception as e:
+                logging.error("[POST-MEETING] Conflict detection failed: %s", e)
+                aggregated["conflicting_topics"] = []
 
     # Ensure all fields have data - deterministic, honest fallbacks
     if not aggregated["mom"]:
@@ -801,5 +1081,16 @@ async def analyze_transcript_text(
     if not aggregated["provisional_user_stories"]:
         aggregated["provisional_user_stories"] = []
 
-    logging.info(f"[POST-MEETING] Final result: mom={len(aggregated['mom'])} chars, on_track={len(aggregated['on_track_topics'])}, off_track={len(aggregated['off_track_topics'])}, open={len(aggregated['open_topics'])}, stories={len(aggregated['provisional_user_stories'])}")
+    if not aggregated.get("conflicting_topics"):
+        aggregated["conflicting_topics"] = []
+
+    logging.info(
+        "[POST-MEETING] Final result: mom=%d chars, on_track=%d, off_track=%d, open=%d, stories=%d, conflicts=%d",
+        len(aggregated["mom"]),
+        len(aggregated["on_track_topics"]),
+        len(aggregated["off_track_topics"]),
+        len(aggregated["open_topics"]),
+        len(aggregated["provisional_user_stories"]),
+        len(aggregated["conflicting_topics"]),
+    )
     return aggregated

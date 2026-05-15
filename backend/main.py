@@ -4,12 +4,13 @@ from backend.api import router as v1_router
 from backend.meeting_api import router as meeting_router
 from backend.scope_api import router as scope_router
 from backend.user_story_api import router as user_story_router
-from backend.models import create_db_and_tables
+from backend.models import create_db_and_tables, apply_schema_migrations
 
 # ------------------------
 # Initialize DB on startup
 # ------------------------
 create_db_and_tables()
+apply_schema_migrations()
 
 # ------------------------
 # FastAPI App

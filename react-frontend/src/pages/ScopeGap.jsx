@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getProjectSessions, analyzeScope, getProjectRequirements } from '../api/client';
 import LoadingOverlay from '../components/LoadingOverlay';
@@ -26,6 +26,7 @@ export default function ScopeGap() {
   const [analyzed, setAnalyzed] = useState(false);
   const [moduleFilter, setModuleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const abortControllerRef = useRef(null);
 
   // Restore state when project changes
   useEffect(() => {
@@ -55,19 +56,33 @@ export default function ScopeGap() {
       .catch(() => {});
   }, [selectedProjectId]);
 
+  const handleCancelScope = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setLoading(false);
+    setError('Processing was stopped.');
+  };
+
   const handleAnalyze = async () => {
     if (!selectedProjectId) return;
     setError('');
     setLoading(true);
+    abortControllerRef.current = new AbortController();
     try {
-      await analyzeScope(selectedProjectId);
+      await analyzeScope(selectedProjectId, abortControllerRef.current.signal);
       const data = await getProjectRequirements(selectedProjectId);
       setRequirements(data.requirements || []);
       setAnalyzed(true);
       refreshProjectDetail();
     } catch (err) {
+      if (err.name === 'CanceledError' || err.name === 'AbortError' || err.code === 'ERR_CANCELED') {
+        return;
+      }
       setError(err.response?.data?.detail || 'Scope analysis failed.');
     } finally {
+      abortControllerRef.current = null;
       setLoading(false);
     }
   };
@@ -138,6 +153,7 @@ export default function ScopeGap() {
             'Consolidating results...',
           ]}
           currentStep={1}
+          onCancel={handleCancelScope}
         />
       )}
 

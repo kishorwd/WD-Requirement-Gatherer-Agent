@@ -12,6 +12,9 @@ These are new or changed requirements that were mentioned in the conversation.
   * status → always 'Provisional'
   * scope_status → always 'Pending'
   * scope_justification → short blank string (to be filled by scope analyzer later)
+  * is_tentative → true if the requirement uses hedging language such as "might", "possibly",
+    "maybe", "could", "would like to", "if it's easy", "potentially", "we'd consider", or other
+    tentative phrasing. false for firm, confirmed requirements.
 
 ### OUTPUT FORMAT
 Return STRICT JSON ONLY — no markdown, no prose — in this exact schema:
@@ -22,7 +25,8 @@ Return STRICT JSON ONLY — no markdown, no prose — in this exact schema:
       "module": "Payroll Management",
       "status": "Provisional",
       "scope_status": "Pending",
-      "scope_justification": ""
+      "scope_justification": "",
+      "is_tentative": false
     }}
   ]
 }}
