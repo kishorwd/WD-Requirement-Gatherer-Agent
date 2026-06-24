@@ -28,7 +28,7 @@
 
 ## 1. Executive Summary
 
-**BA Co-Pilot** is an AI-driven **Requirement Intelligence Platform** that automates the Business Analysis (BA) and Presales workflow — from the first client brief through to exported, structured Agile user stories.
+**BA Co-Pilot** is an AI-driven **Requirement Intelligence Platform** that automates the Business Analysis (BA) workflow — from the first client brief through to exported, structured Agile user stories.
 
 It replaces manual transcription, requirement categorization, and scope-gap analysis with a pipeline of **specialized Large Language Model (LLM) agents** orchestrated by **LangGraph**. The defining design pattern is **Actor–Critic**: a generator agent drafts an artifact, a reviewer agent critiques it against strict criteria, and the system loops until the critic approves (capped at 2 cycles).
 
