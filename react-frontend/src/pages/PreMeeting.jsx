@@ -25,6 +25,7 @@ export default function PreMeeting() {
   const [currentStep, setCurrentStep] = useState(0);
   const [brief, setBrief] = useState(null);
   const [error, setError] = useState('');
+  const [isFormExpanded, setIsFormExpanded] = useState(true);
   const abortControllerRef = useRef(null);
   const stepTimerRef = useRef(null);
 
@@ -35,13 +36,16 @@ export default function PreMeeting() {
       setIndustry(projectDetail.industry || '');
       if (projectDetail.pre_meeting_brief) {
         setBrief(projectDetail.pre_meeting_brief);
+        setIsFormExpanded(false);
       } else {
         setBrief(null);
+        setIsFormExpanded(true);
       }
     } else {
       setClientName('');
       setIndustry('');
       setBrief(null);
+      setIsFormExpanded(true);
     }
     setError('');
   }, [projectDetail]);
@@ -92,6 +96,7 @@ export default function PreMeeting() {
     try {
       const result = await generateBrief(fd, abortControllerRef.current.signal);
       setBrief(result.brief);
+      setIsFormExpanded(false);
       // Refresh project detail so the sidebar pipeline updates
       refreshProjectDetail();
     } catch (err) {
@@ -178,127 +183,150 @@ export default function PreMeeting() {
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '24px', alignItems: 'start' }}>
-          {/* Left Panel — Inputs */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-            {/* Project Setup */}
-            <div className="card">
-              <div className="card-title"><span className="card-icon">🏢</span> Project Setup</div>
-              <div className="form-group">
-                <label className="form-label">Client Name *</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Tata Motors"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Top Panel — Inputs (Collapsible) */}
+          {isFormExpanded ? (
+            <div className="card fade-in" style={{ padding: '24px', background: 'var(--bg-surface)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '1.25rem', margin: 0 }}><span className="card-icon">🏢</span> Project Setup</h2>
+                {brief && (
+                  <button className="btn btn-ghost btn-sm" onClick={() => setIsFormExpanded(false)}>
+                    Collapse ✕
+                  </button>
+                )}
               </div>
-              <div className="form-group">
-                <label className="form-label">Industry *</label>
-                <input
-                  className="form-input"
-                  placeholder="e.g. Automotive Manufacturing"
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                />
-              </div>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">BA Focus / Context</label>
-                <textarea
-                  className="form-textarea"
-                  placeholder="e.g. Focus on supply chain logistics challenges and EV strategy..."
-                  value={baInput}
-                  onChange={(e) => setBaInput(e.target.value)}
-                  style={{ minHeight: '90px' }}
-                />
-              </div>
-            </div>
-
-            {/* Presales Document */}
-            <div className="card">
-              <div className="card-title"><span className="card-icon">📎</span> Presales Document *</div>
-              <FileDropzone
-                label="Drop your SOW / Presales doc"
-                subtext="PDF, DOCX, XLSX, XLS supported"
-                accept=".pdf,.docx,.xlsx,.xls"
-                value={presalesDoc}
-                onChange={setPresalesDoc}
-                icon="📋"
-              />
-            </div>
-
-            {/* Additional Documents */}
-            <div className="card">
-              <div className="card-title" style={{ justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="card-icon">📂</span> Additional Docs
-                </span>
-                <button className="btn btn-ghost btn-sm" onClick={addDocSlot}>+ Add</button>
-              </div>
-              {additionalDocs.length === 0 && (
-                <p className="text-muted text-sm">No additional documents added.</p>
-              )}
-              {additionalDocs.map((doc, i) => (
-                <div key={i} style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: i < additionalDocs.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Document #{i + 1}</span>
-                    <button className="btn-ghost btn btn-sm" onClick={() => removeDoc(i)} style={{ color: 'var(--danger)' }}>Remove</button>
-                  </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+                {/* Left Column - Project Setup */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div className="form-group">
-                    <label className="form-label">Context / Explanation</label>
+                    <label className="form-label">Client Name *</label>
                     <input
                       className="form-input"
-                      placeholder="Describe what this file contains..."
-                      value={doc.explanation}
-                      onChange={(e) => updateDoc(i, 'explanation', e.target.value)}
+                      placeholder="e.g. Tata Motors"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
                     />
                   </div>
-                  <FileDropzone
-                    accept=".pdf,.docx,.xlsx,.xls"
-                    value={doc.file}
-                    onChange={(f) => updateDoc(i, 'file', f)}
-                    label="Upload document"
-                    subtext="PDF, DOCX, XLSX"
-                  />
+                  <div className="form-group">
+                    <label className="form-label">Industry *</label>
+                    <input
+                      className="form-input"
+                      placeholder="e.g. Automotive Manufacturing"
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">BA Focus / Context</label>
+                    <textarea
+                      className="form-textarea"
+                      placeholder="e.g. Focus on supply chain logistics challenges and EV strategy..."
+                      value={baInput}
+                      onChange={(e) => setBaInput(e.target.value)}
+                      style={{ minHeight: '120px' }}
+                    />
+                  </div>
                 </div>
-              ))}
+
+                {/* Right Column - Documents */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label className="form-label"><span className="card-icon">📎</span> Presales Document *</label>
+                    <FileDropzone
+                      label="Drop your SOW / Presales doc"
+                      subtext="PDF, DOCX, XLSX, XLS supported"
+                      accept=".pdf,.docx,.xlsx,.xls"
+                      value={presalesDoc}
+                      onChange={setPresalesDoc}
+                      icon="📋"
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label className="form-label" style={{ margin: 0 }}><span className="card-icon">📂</span> Additional Docs</label>
+                      <button className="btn btn-ghost btn-sm" style={{ padding: '0 8px' }} onClick={addDocSlot}>+ Add</button>
+                    </div>
+                    {additionalDocs.length === 0 && (
+                      <p className="text-muted text-sm" style={{ marginTop: '4px' }}>No additional documents added.</p>
+                    )}
+                    {additionalDocs.map((doc, i) => (
+                      <div key={i} style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: i < additionalDocs.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Document #{i + 1}</span>
+                          <button className="btn-ghost btn btn-sm" onClick={() => removeDoc(i)} style={{ color: 'var(--danger)', padding: '0 8px' }}>Remove</button>
+                        </div>
+                        <div className="form-group">
+                          <input
+                            className="form-input"
+                            placeholder="Context / Explanation..."
+                            value={doc.explanation}
+                            onChange={(e) => updateDoc(i, 'explanation', e.target.value)}
+                            style={{ marginBottom: '8px' }}
+                          />
+                        </div>
+                        <FileDropzone
+                          accept=".pdf,.docx,.xlsx,.xls"
+                          value={doc.file}
+                          onChange={(f) => updateDoc(i, 'file', f)}
+                          label="Upload document"
+                          subtext="PDF, DOCX, XLSX"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="alert alert-error" style={{ marginTop: '20px' }}>{error}</div>
+              )}
+
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
+                <button
+                  className="btn btn-primary btn-lg"
+                  onClick={handleGenerate}
+                  disabled={loading}
+                  style={{ minWidth: '250px' }}
+                >
+                  {loading ? <><span className="spinner" /> Generating...</> : brief ? '🔄 Re-Generate Intelligence Brief' : '✨ Generate Intelligence Brief'}
+                </button>
+              </div>
             </div>
+          ) : (
+            <div className="card fade-in" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', background: 'var(--bg-surface)', borderLeft: '4px solid var(--primary)' }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><span className="card-icon">🏢</span> {clientName || 'Untitled Project'}</h3>
+                <p className="text-sm text-muted" style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {industry ? `Industry: ${industry}` : 'No Industry specified'} | Presales Doc: {presalesDoc ? (presalesDoc.name || 'Uploaded') : 'None'} {additionalDocs.length > 0 ? `| +${additionalDocs.length} additional docs` : ''}
+                </p>
+              </div>
+              <button className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={() => setIsFormExpanded(true)}>
+                ✏️ Edit Details
+              </button>
+            </div>
+          )}
 
-            {/* Error */}
-            {error && (
-              <div className="alert alert-error">{error}</div>
-            )}
-
-            {/* Generate Button */}
-            <button
-              className="btn btn-primary btn-lg btn-full"
-              onClick={handleGenerate}
-              disabled={loading}
-            >
-              {loading ? <><span className="spinner" /> Generating...</> : brief ? '🔄 Re-Generate Intelligence Brief' : '✨ Generate Intelligence Brief'}
-            </button>
-          </div>
-
-          {/* Right Panel — Output */}
-          <div>
-            {!brief ? (
-              <div className="card" style={{ minHeight: '500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          {/* Bottom Panel — Output */}
+          <div style={{ flex: 1 }}>
+            {!brief && !isFormExpanded ? (
+              <div className="card fade-in" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
                 <div style={{ fontSize: '3.5rem' }}>🧠</div>
                 <h3 style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Your brief will appear here</h3>
                 <p className="text-sm text-muted" style={{ textAlign: 'center', maxWidth: '300px' }}>
                   Fill in the project details, upload your presales document, and click Generate.
                 </p>
               </div>
-            ) : (
+            ) : brief ? (
               <div className="card fade-in">
                 {/* Brief Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)' }}>
-                  <div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div style={{ minWidth: 0 }}>
                     <h2 style={{ marginBottom: '4px' }}>Intelligence Brief</h2>
-                    <p className="text-sm text-muted">{clientName} · {industry}</p>
+                    <p className="text-sm text-muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '400px' }}>{clientName} · {industry}</p>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
                     <span className="badge badge-success">Saved ✓</span>
                     <button className="btn btn-secondary btn-sm" onClick={handleCopy}>📋 Copy</button>
                     <button className="btn btn-primary btn-sm" onClick={handleDownload}>⬇️ Download</button>
@@ -306,7 +334,7 @@ export default function PreMeeting() {
                 </div>
                 <MarkdownViewer content={brief} />
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

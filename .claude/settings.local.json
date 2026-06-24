@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python list_models.py)"
+      "Bash(python list_models.py)",
+      "Artifact",
+      "Bash(sed 's/=.*/=<redacted>/' .env)",
+      "Bash(python -c \"import sqlite3; c=sqlite3.connect\\('data/projects.db'\\); print\\([r[0] for r in c.execute\\(\\\\\"SELECT name FROM sqlite_master WHERE type='table'\\\\\"\\)]\\)\")"
     ]
   }
 }

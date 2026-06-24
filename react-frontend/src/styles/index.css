@@ -135,9 +135,12 @@ a:hover { color: var(--accent-secondary); }
 .app-main {
   margin-left: var(--sidebar-width);
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  overflow-x: hidden;
+  width: calc(100% - var(--sidebar-width));
 }
 
 .page-content {
@@ -145,6 +148,39 @@ a:hover { color: var(--accent-secondary); }
   padding: var(--spacing-2xl);
   max-width: 1400px;
   width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (max-width: 1200px) {
+  .page-content {
+    padding: var(--spacing-xl);
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --sidebar-width: 220px;
+  }
+  .page-content {
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --sidebar-width: 0px;
+  }
+  .app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+  .sidebar {
+    display: none;
+  }
+  .page-content {
+    padding: var(--spacing-md);
+  }
 }
 
 /* =====================
@@ -185,6 +221,9 @@ a:hover { color: var(--accent-secondary); }
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-sm);
   transition: border-color var(--transition-base), background var(--transition-base), box-shadow var(--transition-base);
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .card:hover {
@@ -550,7 +589,7 @@ a:hover { color: var(--accent-secondary); }
 /* =====================
    MARKDOWN VIEWER
    ===================== */
-.markdown-content { font-size: 0.9rem; line-height: 1.8; color: var(--text-secondary); }
+.markdown-content { font-size: 0.9rem; line-height: 1.8; color: var(--text-secondary); overflow-wrap: break-word; word-break: break-word; }
 .markdown-content h1, .markdown-content h2, .markdown-content h3,
 .markdown-content h4, .markdown-content h5, .markdown-content h6 {
   color: var(--text-primary);
@@ -669,5 +708,5 @@ a:hover { color: var(--accent-secondary); }
 .font-bold { font-weight: 700; }
 .overflow-hidden { overflow: hidden; }
 .w-full { width: 100%; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-md); }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-md); }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); }
